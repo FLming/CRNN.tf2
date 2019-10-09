@@ -10,7 +10,7 @@ from dataset import OCRDataLoader
 parser = argparse.ArgumentParser(description="Process some integers.")
 parser.add_argument("-p", "--annotation_path", type=str, help="The path of annnotation file.")
 parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change this, you should change the structure of CNN.")
-parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=19).")
+parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
 parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
 parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
 parser.add_argument("-e", "--epoches", type=int, default=5, help="Num of epoch to train")

@@ -8,5 +8,5 @@ venv/
 
 data/
 ckpt/
-saved_model/
+SavedModel/
 tensorboard/

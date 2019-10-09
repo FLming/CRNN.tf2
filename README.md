@@ -14,7 +14,7 @@ See example. The file contains all characters and blank label(in the last or any
 
 ### Image data
 
-In my opinion, images of the same width(>=19) will be better. By the way, the inputs of image height must equals 32 because of CNN construction. If you want to change it, you have to change the construction of CNN.
+In my opinion, images of the same width(>=16) will be better. By the way, the inputs of image height must equals 32 because of CNN construction. If you want to change it, you have to change the construction of CNN.
 
 ### [Lable data](./example_data/annotation.txt)
 
