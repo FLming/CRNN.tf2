@@ -14,7 +14,7 @@ See example. The file contains all characters and blank label(in the last or any
 
 ### Image data
 
-In my opinion, images of the same width(>=16) will be better. By the way, the inputs of image height must equals 32 because of CNN construction. If you want to change it, you have to change the construction of CNN.
+In my opinion, images of the same width(>=19) will be better. By the way, the inputs of image height must equals 32 because of CNN construction. If you want to change it, you have to change the construction of CNN.
 
 ### [Lable data](./example_data/annotation.txt)
 
@@ -29,17 +29,17 @@ You can run dataset.py to make sure your data prepare is ok.
 ## Train
 
 ```bash
-python main.py --mode train --annotation_path XX.txt --table_path XX.txt 
+python train.py -p ../data/train.txt -t ../data/table.txt
 ```
 
-See in tensorboard
+See in tensorboard.
 
 ```bash
 tensorboard --logdir=tensorboard/
 ```
 
-## Test
+## Eval
 
 ```bash
-python main.py --mode test --annotation_path data/train.txt --table_path data/table.txt --checkpoint_path ckpt/XX
+python eval.py -p ../data/val.txt -t ../data/table.txt --checkpoint ckpt/2019-10-08-15-02-28/
 ```

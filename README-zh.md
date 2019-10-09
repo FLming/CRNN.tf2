@@ -26,7 +26,7 @@
 ## 训练
 
 ```bash
-python main.py --mode train --annotation_path XX.txt --table_path XX.txt 
+python train.py -p ../data/train.txt -t ../data/table.txt 
 ```
 
 在tensorboard中查看训练情况
@@ -38,5 +38,5 @@ tensorboard --logdir=tensorboard/
 ## 测试
 
 ```bash
-python main.py --mode test --annotation_path data/train.txt --table_path data/table.txt --checkpoint_path ckpt/XX
+python eval.py -p ../data/val.txt -t ../data/table.txt --checkpoint ckpt/2019-10-08-15-02-28/
 ```
