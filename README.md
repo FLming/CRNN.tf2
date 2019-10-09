@@ -25,6 +25,11 @@ The format of annotation file is:
 
 You can run dataset.py to make sure your data prepare is ok.
 
+### Tips
+
+About data pipline, you can change the dataset.py. For example only deal with digit data, then filt in read_imagepaths_and_labels function.
+
+About data augment, you can use tf.image.xx api.
 
 ## Train
 

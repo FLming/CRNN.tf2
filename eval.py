@@ -36,7 +36,7 @@ def eval(num_classes):
     num_right = 0
     for X, y in dataloader():
         start_time = time.perf_counter()
-        y_pred = model(X)
+        y_pred = model(X, training=False)
         decoded, neg_sum_logits = tf.nn.ctc_greedy_decoder(inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
                                                            sequence_length=[y_pred.shape[1]]*y_pred.shape[0],
                                                            merge_repeated=True)

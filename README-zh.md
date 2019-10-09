@@ -23,6 +23,12 @@
 
 你可以运行一下dataset.py确保你的数据没有问题。
 
+### 提示
+
+关于图片输入的处理，可以修改dataset.py文件。比如，想处理只含数字的数据，那么可以在read_imagepaths_and_labels函数中处理。
+
+关于数据增强可以使用tf.image.xx。
+
 ## 训练
 
 ```bash

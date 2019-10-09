@@ -13,7 +13,7 @@ parser.add_argument("--image_height", type=int, default=32, help="Image height(3
 parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
 parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
 parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
-parser.add_argument("-e", "--epoches", type=int, default=5, help="Num of epoch to train")
+parser.add_argument("-e", "--epochs", type=int, default=5, help="Num of epoch to train")
 parser.add_argument("-r", "--learning_rate", type=float, default=0.0001, help="Learning rate.")
 args = parser.parse_args()
 
@@ -53,7 +53,7 @@ def train(num_classes):
     summary_writer = tf.summary.create_file_writer("./tensorboard/{}".format(dirname))
 
     step = 0
-    for epoch in range(1, args.epoches + 1):
+    for epoch in range(1, args.epochs + 1):
         losses = []
         for X, y in dataloader():
             loss = train_one_step(model, X, y, optimizer)
@@ -61,7 +61,7 @@ def train(num_classes):
             with summary_writer.as_default():
                 tf.summary.scalar("loss", loss, step=step)
             step += 1
-        print("[{} / {}] Mean loss: {}".format(epoch, args.epoches, np.mean(losses)))
+        print("[{} / {}] Mean loss: {}".format(epoch, args.epochs, np.mean(losses)))
         if (epoch - 1) % 1 == 0:
             path = manager.save(checkpoint_number=epoch)
             print("model saved to {}.".format(path))

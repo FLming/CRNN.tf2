@@ -39,7 +39,7 @@ def CRNN(num_classes):
 
 if __name__ == "__main__":
     model = CRNN(10)
-    x = tf.zeros([100, 32, 16, 1])
+    x = tf.zeros([100, 32, 20, 1])
     y = model(x, training=False)
 
     model.summary()
