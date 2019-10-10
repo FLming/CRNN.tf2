@@ -62,6 +62,8 @@ tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path
 
 还有问题不能实现转化，现在的转化器好像不支持RNN结构以及不定形状的输入。如果你有转化的办法，请联系。
 
+如果你把输入图像的shape固定下来，并删除BiLSTM，运行to_tflite.py你将得到一个tflite模型
+
 ## OpenVINO
 
 问题相似，转换失败。

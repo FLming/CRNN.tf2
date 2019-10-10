@@ -64,6 +64,8 @@ tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path
 
 Still have problem. It seems not support RNN and None-shape input now. If you know how to convert, tell me thanks.
 
+If you defined a fixed-shape input and remove BiLSTM, you can run to_tflite.py to get a tflite file.
+
 ## OpenVINO
 
 Still have a problem to convert to openvino ir.

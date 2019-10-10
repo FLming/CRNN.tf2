@@ -52,7 +52,7 @@ def train(num_classes):
     dirname = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(checkpoint, directory="./ckpt/{}".format(dirname), max_to_keep=args.max_to_keep)
-    summary_writer = tf.summary.create_file_writer("./tensorboard/{}".format(dirname))
+    summary_writer = tf.summary.create_file_writer("./logs/{}".format(dirname))
 
     avg_loss = tf.keras.metrics.Mean(name='loss', dtype=tf.float32)
     
