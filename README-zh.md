@@ -46,3 +46,22 @@ tensorboard --logdir=tensorboard/
 ```bash
 python eval.py -p ../data/val.txt -t ../data/table.txt --checkpoint ckpt/2019-10-08-15-02-28/
 ```
+
+## Tensorflow serving部署
+
+安装请参考[官网](https://www.tensorflow.org/tfx/serving/setup).
+
+1. 首先得到一个训练好的模型。
+2. 运行to_SavedModel.py将ckpt格式的模型转化为SavedModel。
+3. 部署Tensorflow serving:
+```bash
+tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
+```
+
+## Tensorflow lite
+
+还有问题不能实现转化，现在的转化器好像不支持RNN结构以及不定形状的输入。如果你有转化的办法，请联系。
+
+## OpenVINO
+
+问题相似，转换失败。

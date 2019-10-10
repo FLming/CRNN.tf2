@@ -4,8 +4,7 @@ import tensorflow as tf
 def CRNN(num_classes):
     """Sequential version 1."""
     model = tf.keras.Sequential([
-        tf.keras.Input(shape=(32, None, 1)),
-        tf.keras.layers.Conv2D(filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu),
+        tf.keras.layers.Conv2D(filters=64, kernel_size=[3, 3], padding="same", activation=tf.nn.relu, input_shape=(32, None, 1)),
         tf.keras.layers.MaxPool2D(pool_size=[2, 2]),
 
         tf.keras.layers.Conv2D(filters=128, kernel_size=[3, 3], padding="same", activation=tf.nn.relu),

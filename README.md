@@ -48,3 +48,22 @@ tensorboard --logdir=tensorboard/
 ```bash
 python eval.py -p ../data/val.txt -t ../data/table.txt --checkpoint ckpt/2019-10-08-15-02-28/
 ```
+
+## Tensorflow serving
+
+Please refer to the official website for [installation](https://www.tensorflow.org/tfx/serving/setup).
+
+1. First you should pick a good model.
+2. Run to_SavedModel.py get a SavedModel format model.
+3. Just run tensorflow serving by 
+```bash
+tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
+```
+
+## Tensorflow lite
+
+Still have problem. It seems not support RNN and None-shape input now. If you know how to convert, tell me thanks.
+
+## OpenVINO
+
+Still have a problem to convert to openvino ir.

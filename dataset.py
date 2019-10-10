@@ -59,9 +59,8 @@ class OCRDataLoader():
 
     def _decode_and_resize(self, filename, label):
         image_string = tf.io.read_file(filename)
-        image_decoded = tf.io.decode_jpeg(image_string, channels=3)
-        image_gray = tf.image.rgb_to_grayscale(image_decoded)
-        image_resized = tf.image.resize(image_gray, [self.image_height, self.image_width]) / 255.0
+        image_decoded = tf.io.decode_jpeg(image_string, channels=1)
+        image_resized = tf.image.resize(image_decoded, [self.image_height, self.image_width]) / 255.0
         return image_resized, label
 
     def _convert_label(self, image, label):
@@ -108,7 +107,13 @@ def map_to_chars(inputs, table, blank_index=0, merge_repeated=False):
 
 
 if __name__ == "__main__":
-    dataloader = OCRDataLoader("example_data/val.txt", 32, 100, table_path="example_data/table.txt", shuffle=True, batch_size=2)
+    import argparse
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("-p", "--annotation_path", type=str, help="The path of annnotation file.")
+    parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
+    args = parser.parse_args()
+
+    dataloader = OCRDataLoader(args.annotation_path, 32, 100, table_path=args.table_path, shuffle=True, batch_size=2)
     print("Total have {} data".format(len(dataloader)))
-    for image, label in dataloader().take(2):
+    for image, label in dataloader():
         print("The image's shape: {}, label's dense shape is {}.".format(image.shape, label.dense_shape))

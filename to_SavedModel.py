@@ -6,7 +6,7 @@ from model import CRNN
 
 parser = argparse.ArgumentParser(description="Process some integers.")
 parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
-parser.add_argument("--checkpoint_path", type=str, help="The checkpoint path.")
+parser.add_argument("-p", "--checkpoint_path", type=str, help="The checkpoint path.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
