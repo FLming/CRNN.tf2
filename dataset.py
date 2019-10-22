@@ -58,10 +58,11 @@ class OCRDataLoader():
         return imgpaths, labels
 
     def _decode_and_resize(self, filename, label):
-        image_string = tf.io.read_file(filename)
-        image_decoded = tf.io.decode_jpeg(image_string, channels=1)
-        image_resized = tf.image.resize(image_decoded, [self.image_height, self.image_width]) / 255.0
-        return image_resized, label
+        image = tf.io.read_file(filename)
+        image = tf.io.decode_jpeg(image, channels=1)
+        image = tf.image.convert_image_dtype(image, tf.float32)
+        image = tf.image.resize(image, [self.image_height, self.image_width])
+        return image, label
 
     def _convert_label(self, image, label):
         chars = tf.strings.unicode_split(label, input_encoding="UTF-8")
@@ -114,6 +115,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataloader = OCRDataLoader(args.annotation_path, 32, 100, table_path=args.table_path, shuffle=True, batch_size=2)
-    print("Total have {} data".format(len(dataloader)))
-    for image, label in dataloader():
-        print("The image's shape: {}, label's dense shape is {}.".format(image.shape, label.dense_shape))
+    print("Total have {} data.".format(len(dataloader)))
+    print("Element spec is: {}.".format(dataloader().element_spec))
+    for image, label in dataloader().take(1):
+        print("The image's shape: {}, label is {}.".format(image.shape, label))
