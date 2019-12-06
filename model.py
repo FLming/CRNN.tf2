@@ -16,14 +16,14 @@ def CRNN(num_classes):
     x = tf.keras.layers.Activation(activation=tf.nn.relu)(x)
 
     x = tf.keras.layers.Conv2D(filters=256, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)(x)
-    x = tf.keras.layers.MaxPool2D(pool_size=[2, 2], strides=[2, 1])(x)
+    x = tf.keras.layers.MaxPool2D(pool_size=[2, 1], strides=[2, 1], padding="same")(x)
 
     x = tf.keras.layers.Conv2D(filters=512, kernel_size=[3, 3], padding="same")(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Activation(activation=tf.nn.relu)(x)
 
     x = tf.keras.layers.Conv2D(filters=512, kernel_size=[3, 3], padding="same", activation=tf.nn.relu)(x)
-    x = tf.keras.layers.MaxPool2D(pool_size=[2, 2], strides=[2, 1])(x)
+    x = tf.keras.layers.MaxPool2D(pool_size=[2, 1], strides=[2, 1], padding="same")(x)
 
     x = tf.keras.layers.Conv2D(filters=512, kernel_size=[2, 2])(x)
     x = tf.keras.layers.BatchNormalization()(x)

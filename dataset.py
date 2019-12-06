@@ -26,13 +26,15 @@ class OCRDataLoader():
                                                   tf.lookup.TextFileIndex.WHOLE_LINE,
                                                   tf.int64,
                                                   tf.lookup.TextFileIndex.LINE_NUMBER)
-        # default value for blank label
+        # Default value for blank label
         self.table = tf.lookup.StaticHashTable(initializer=file_init, default_value=blank_index)
 
         dataset = tf.data.Dataset.from_tensor_slices((imgpaths, labels))
         if shuffle:
             dataset = dataset.shuffle(buffer_size=self.size)
         dataset = dataset.map(self._decode_and_resize)
+        # Ignore the errors e.g. decode error or invalid data.
+        dataset = dataset.apply(tf.data.experimental.ignore_errors()) 
         # Pay attention to the location of the batch function.
         dataset = dataset.batch(batch_size)
         dataset = dataset.map(self._convert_label)
@@ -47,13 +49,18 @@ class OCRDataLoader():
         labels = []
         for annpath in annotation_path.split(','):
             annotation_folder = os.path.dirname(annpath)
+            # Parse MjSynth dataset. url: https://www.robots.ox.ac.uk/~vgg/data/text/
+            # If you use your own dataset, maybe you should change the parse code below.
             with open(annpath) as f:
                 content = np.array([line.strip().split() for line in f.readlines()])
-                imgpaths_local = content[:, 0]
-                imgpaths_local = [os.path.join(annotation_folder, line.lstrip("/")) for line in imgpaths_local]
-                labels_local = content[:, 1]
-                imgpaths.extend(imgpaths_local)
-                labels.extend(labels_local)
+            imgpaths_local = content[:, 0]
+            labels_local = [line.split("_")[1] for line in imgpaths_local]
+            # Parse example dataset.
+            # imgpaths_local = [os.path.join(annotation_folder, line.lstrip("/")) for line in imgpaths_local]
+            # labels_local = content[:, 1]
+            imgpaths_local = [os.path.join(annotation_folder, line) for line in imgpaths_local]
+            imgpaths.extend(imgpaths_local)
+            labels.extend(labels_local)
 
         return imgpaths, labels
 
@@ -118,4 +125,5 @@ if __name__ == "__main__":
     print("Total have {} data.".format(len(dataloader)))
     print("Element spec is: {}.".format(dataloader().element_spec))
     for image, label in dataloader().take(1):
-        print("The image's shape: {}, label is {}.".format(image.shape, label))
+        label = tf.sparse.to_dense(label).numpy()
+        print("The image's shape: {}\nlabel is \n{}.".format(image.shape, label))
