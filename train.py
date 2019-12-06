@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from model import CRNN
-from dataset import OCRDataLoader
+from dataset import OCRDataLoader, map_to_chars
 
 parser = argparse.ArgumentParser(description="Process some integers.")
 parser.add_argument("-ta", "--train_annotation_path", type=str, required=True, help="The path of training data annnotation file.")
@@ -17,8 +17,7 @@ parser.add_argument("-e", "--epochs", type=int, default=5, help="Num of epochs t
 parser.add_argument("-r", "--learning_rate", type=float, default=0.001, help="Learning rate.")
 parser.add_argument("--checkpoint", type=str, help="The checkpoint path. (Restore)")
 parser.add_argument("--max_to_keep", type=int, default=5, help="Max num of checkpoint to keep.")
-parser.add_argument("--val_freq", type=int, default=1, help="Val interval.")
-parser.add_argument("--save_freq", type=int, default=1, help="Saved interval.")
+parser.add_argument("--save_freq", type=int, default=1, help="Save and validate interval.")
 parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change this, you should change the structure of CNN.")
 args = parser.parse_args()
 
@@ -40,6 +39,31 @@ def train_one_step(model, X, Y, optimizer):
     grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(grads_and_vars=zip(grads, model.trainable_variables))
     return loss
+
+@tf.function
+def val_one_step(model, X, Y):
+    y_pred = model(X, training=False)
+    loss = tf.nn.ctc_loss(labels=Y,
+                          logits=tf.transpose(y_pred, perm=[1, 0, 2]),
+                          label_length=None,
+                          logit_length=[y_pred.shape[1]]*y_pred.shape[0],
+                          blank_index=BLANK_INDEX)
+    loss = tf.reduce_mean(loss)
+    decoded, neg_sum_logits = tf.nn.ctc_greedy_decoder(inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
+                                                       sequence_length=[y_pred.shape[1]]*y_pred.shape[0],
+                                                       merge_repeated=True)
+    return decoded, loss
+
+def decode_and_count(decoded, Y, mapper):
+    decoded = tf.sparse.to_dense(decoded[0], default_value=BLANK_INDEX).numpy()
+    Y = tf.sparse.to_dense(Y, default_value=BLANK_INDEX).numpy()
+    decoded = map_to_chars(decoded, mapper, blank_index=BLANK_INDEX)
+    Y = map_to_chars(Y, mapper, blank_index=BLANK_INDEX)
+    count = 0
+    for y_pred, y in zip(decoded, Y):
+        if y_pred == y:
+            count += 1
+    return count
 
 if __name__ == "__main__":
     train_dataloader = OCRDataLoader(args.train_annotation_path, 
@@ -78,17 +102,29 @@ if __name__ == "__main__":
     else:
         print("Initializing from scratch.")
 
-    avg_loss = tf.keras.metrics.Mean(name='train_loss', dtype=tf.float32)
+    avg_loss = tf.keras.metrics.Mean(name="train_loss")
+    val_avg_loss = tf.keras.metrics.Mean(name="val_loss")
 
     for epoch in range(1, args.epochs + 1):
         with summary_writer.as_default():
             for X, Y in train_dataloader():
                 loss = train_one_step(model, X, Y, optimizer)
-                tf.summary.scalar("loss", loss, step=optimizer.iterations)
+                tf.summary.scalar("train_loss", loss, step=optimizer.iterations)
                 avg_loss.update_state(loss)
-            print("[{} / {}] Mean loss: {}.".format(epoch, args.epochs, avg_loss.result()))
+            print("[{} / {}] Mean train loss: {}.".format(epoch, args.epochs, avg_loss.result()))
             avg_loss.reset_states()
             if (epoch - 1) % args.save_freq == 0:
                 saved_path = manager.save(checkpoint_number=epoch)
                 print("Model saved to {}.".format(saved_path))
-            
+                if args.val_annotation_path:
+                    num_correct_samples = 0
+                    for X, Y in val_dataloader():
+                        decoded, loss = val_one_step(model, X, Y)
+                        count = decode_and_count(decoded, Y, INT_TO_CHAR)
+                        val_avg_loss.update_state(loss)
+                        num_correct_samples += count
+                    tf.summary.scalar("val_loss", val_avg_loss.result(), step=epoch)
+                    tf.summary.scalar("accuracy(line, greedy decoder)", num_correct_samples / len(val_dataloader), step=epoch)
+                    print("[{} / {}] Mean val loss: {}.".format(epoch, args.epochs, val_avg_loss.result()))
+                    print("[{} / {}] Accuracy(line, greedy decoder): {:.2f}".format(epoch, args.epochs, num_correct_samples / len(val_dataloader)))
+                    val_avg_loss.reset_states()
