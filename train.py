@@ -5,9 +5,9 @@ import numpy as np
 import tensorflow as tf
 
 from model import CRNN
-from dataset import OCRDataLoader, map_to_chars
+from dataset import OCRDataLoader, map_and_count
 
-parser = argparse.ArgumentParser(description="Process some integers.")
+parser = argparse.ArgumentParser()
 parser.add_argument("-ta", "--train_annotation_paths", type=str, required=True, help="The path of training data annnotation file.")
 parser.add_argument("-va", "--val_annotation_paths", type=str, help="The path of val data annotation file.")
 parser.add_argument("-t", "--table_path", type=str, required=True, help="The path of table file.")
@@ -54,17 +54,6 @@ def val_one_step(model, X, Y):
                                                        merge_repeated=True)
     return decoded, loss
 
-def decode_and_count(decoded, Y, mapper):
-    decoded = tf.sparse.to_dense(decoded[0], default_value=BLANK_INDEX).numpy()
-    Y = tf.sparse.to_dense(Y, default_value=BLANK_INDEX).numpy()
-    decoded = map_to_chars(decoded, mapper, blank_index=BLANK_INDEX)
-    Y = map_to_chars(Y, mapper, blank_index=BLANK_INDEX)
-    count = 0
-    for y_pred, y in zip(decoded, Y):
-        if y_pred == y:
-            count += 1
-    return count
-
 if __name__ == "__main__":
     train_dataloader = OCRDataLoader(args.train_annotation_paths, 
                                      args.image_height, 
@@ -73,7 +62,7 @@ if __name__ == "__main__":
                                      blank_index=BLANK_INDEX,
                                      shuffle=True, 
                                      batch_size=args.batch_size)
-    print("Num of training samples: {}.".format(len(train_dataloader)))
+    print("Num of training samples: {}".format(len(train_dataloader)))
     if args.val_annotation_paths:
         val_dataloader = OCRDataLoader(args.val_annotation_paths,
                                        args.image_height,
@@ -81,11 +70,11 @@ if __name__ == "__main__":
                                        table_path=args.table_path,
                                        blank_index=BLANK_INDEX,
                                        batch_size=args.batch_size)
-        print("Num of val samples: {}.".format(len(val_dataloader)))
-    print("Num of classes: {}.".format(NUM_CLASSES))
-    print("Blank index is {}.".format(BLANK_INDEX))
+        print("Num of val samples: {}".format(len(val_dataloader)))
+    print("Num of classes: {}".format(NUM_CLASSES))
+    print("Blank index is {}".format(BLANK_INDEX))
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-    print("Start at {}.".format(localtime))
+    print("Start at {}".format(localtime))
 
     model = CRNN(NUM_CLASSES)
     model.summary()
@@ -98,9 +87,9 @@ if __name__ == "__main__":
     summary_writer = tf.summary.create_file_writer("./logs/{}".format(localtime))
     checkpoint.restore(manager.latest_checkpoint)
     if manager.latest_checkpoint:
-        print("Restored from {}.".format(manager.latest_checkpoint))
+        print("Restored from {}".format(manager.latest_checkpoint))
     else:
-        print("Initializing from scratch.")
+        print("Initializing from scratch")
 
     avg_loss = tf.keras.metrics.Mean(name="train_loss")
     val_avg_loss = tf.keras.metrics.Mean(name="val_loss")
@@ -111,20 +100,20 @@ if __name__ == "__main__":
                 loss = train_one_step(model, X, Y, optimizer)
                 tf.summary.scalar("train_loss", loss, step=optimizer.iterations)
                 avg_loss.update_state(loss)
-            print("[{} / {}] Mean train loss: {}.".format(epoch, args.epochs, avg_loss.result()))
+            print("[{} / {}] Mean train loss: {}".format(epoch, args.epochs, avg_loss.result()))
             avg_loss.reset_states()
             if (epoch - 1) % args.save_freq == 0:
                 saved_path = manager.save(checkpoint_number=epoch)
-                print("Model saved to {}.".format(saved_path))
+                print("Model saved to {}".format(saved_path))
                 if args.val_annotation_paths:
                     num_correct_samples = 0
                     for X, Y in val_dataloader():
                         decoded, loss = val_one_step(model, X, Y)
-                        count = decode_and_count(decoded, Y, INT_TO_CHAR)
+                        count = map_and_count(decoded, Y, INT_TO_CHAR)
                         val_avg_loss.update_state(loss)
                         num_correct_samples += count
                     tf.summary.scalar("val_loss", val_avg_loss.result(), step=epoch)
                     tf.summary.scalar("accuracy(line, greedy decoder)", num_correct_samples / len(val_dataloader), step=epoch)
-                    print("[{} / {}] Mean val loss: {}.".format(epoch, args.epochs, val_avg_loss.result()))
+                    print("[{} / {}] Mean val loss: {}".format(epoch, args.epochs, val_avg_loss.result()))
                     print("[{} / {}] Accuracy(line, greedy decoder): {:.2f}".format(epoch, args.epochs, num_correct_samples / len(val_dataloader)))
                     val_avg_loss.reset_states()

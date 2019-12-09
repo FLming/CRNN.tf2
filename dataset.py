@@ -48,16 +48,18 @@ class OCRDataLoader():
         imgpaths = []
         labels = []
         for annpath in annotation_path.split(','):
-            annotation_folder = os.path.dirname(annpath)
-            # Parse MjSynth dataset. url: https://www.robots.ox.ac.uk/~vgg/data/text/
             # If you use your own dataset, maybe you should change the parse code below.
+            annotation_folder = os.path.dirname(annpath)
             with open(annpath) as f:
                 content = np.array([line.strip().split() for line in f.readlines()])
             imgpaths_local = content[:, 0]
-            labels_local = [line.split("_")[1] for line in imgpaths_local]
-            # Parse example dataset.
-            # imgpaths_local = [os.path.join(annotation_folder, line.lstrip("/")) for line in imgpaths_local]
-            # labels_local = content[:, 1]
+            # Parse MjSynth dataset. format: XX_label_XX.jpg XX
+            # URL: https://www.robots.ox.ac.uk/~vgg/data/text/            
+            # labels_local = [line.split("_")[1] for line in imgpaths_local]
+
+            # Parse example dataset. format: XX.jpg label
+            labels_local = content[:, 1]
+
             imgpaths_local = [os.path.join(annotation_folder, line) for line in imgpaths_local]
             imgpaths.extend(imgpaths_local)
             labels.extend(labels_local)
@@ -93,7 +95,7 @@ def map_to_chars(inputs, table, blank_index=0, merge_repeated=False):
         inputs: list of char ids.
         table: char map.
         blank_index: the index of blank.
-        merge_repeated: True, Only if ctc_greedy_decoder is not used.
+        merge_repeated: True, Only if tf decoder is not used.
 
     Returns:
         lines: list of string.    
@@ -113,17 +115,28 @@ def map_to_chars(inputs, table, blank_index=0, merge_repeated=False):
         lines.append(text)
     return lines
 
+def map_and_count(decoded, Y, mapper, blank_index=0, merge_repeated=False):
+    decoded = tf.sparse.to_dense(decoded[0], default_value=blank_index).numpy()
+    Y = tf.sparse.to_dense(Y, default_value=blank_index).numpy()
+    decoded = map_to_chars(decoded, mapper, blank_index=blank_index, merge_repeated=merge_repeated)
+    Y = map_to_chars(Y, mapper, blank_index=blank_index, merge_repeated=merge_repeated)
+    count = 0
+    for y_pred, y in zip(decoded, Y):
+        if y_pred == y:
+            count += 1
+    return count
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument("-p", "--annotation_path", type=str, help="The path of annnotation file.")
+    parser.add_argument("-p", "--annotation_paths", type=str, help="The paths of annnotation file.")
     parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
     args = parser.parse_args()
 
-    dataloader = OCRDataLoader(args.annotation_path, 32, 100, table_path=args.table_path, shuffle=True, batch_size=2)
-    print("Total have {} data.".format(len(dataloader)))
-    print("Element spec is: {}.".format(dataloader().element_spec))
+    dataloader = OCRDataLoader(args.annotation_paths, 32, 100, table_path=args.table_path, shuffle=True, batch_size=2)
+    print("Total have {} data".format(len(dataloader)))
+    print("Element spec is: {}".format(dataloader().element_spec))
     for image, label in dataloader().take(1):
         label = tf.sparse.to_dense(label).numpy()
-        print("The image's shape: {}\nlabel is \n{}.".format(image.shape, label))
+        print("The image's shape: {}\nlabel is \n{}".format(image.shape, label))
