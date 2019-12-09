@@ -8,8 +8,8 @@ from model import CRNN
 from dataset import OCRDataLoader, map_to_chars
 
 parser = argparse.ArgumentParser(description="Process some integers.")
-parser.add_argument("-ta", "--train_annotation_path", type=str, required=True, help="The path of training data annnotation file.")
-parser.add_argument("-va", "--val_annotation_path", type=str, help="The path of val data annotation file.")
+parser.add_argument("-ta", "--train_annotation_paths", type=str, required=True, help="The path of training data annnotation file.")
+parser.add_argument("-va", "--val_annotation_paths", type=str, help="The path of val data annotation file.")
 parser.add_argument("-t", "--table_path", type=str, required=True, help="The path of table file.")
 parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
 parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
@@ -66,7 +66,7 @@ def decode_and_count(decoded, Y, mapper):
     return count
 
 if __name__ == "__main__":
-    train_dataloader = OCRDataLoader(args.train_annotation_path, 
+    train_dataloader = OCRDataLoader(args.train_annotation_paths, 
                                      args.image_height, 
                                      args.image_width, 
                                      table_path=args.table_path,
@@ -74,8 +74,8 @@ if __name__ == "__main__":
                                      shuffle=True, 
                                      batch_size=args.batch_size)
     print("Num of training samples: {}.".format(len(train_dataloader)))
-    if args.val_annotation_path:
-        val_dataloader = OCRDataLoader(args.val_annotation_path,
+    if args.val_annotation_paths:
+        val_dataloader = OCRDataLoader(args.val_annotation_paths,
                                        args.image_height,
                                        args.image_width,
                                        table_path=args.table_path,
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             if (epoch - 1) % args.save_freq == 0:
                 saved_path = manager.save(checkpoint_number=epoch)
                 print("Model saved to {}.".format(saved_path))
-                if args.val_annotation_path:
+                if args.val_annotation_paths:
                     num_correct_samples = 0
                     for X, Y in val_dataloader():
                         decoded, loss = val_one_step(model, X, Y)

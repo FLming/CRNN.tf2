@@ -6,7 +6,7 @@ import tensorflow as tf
 
 class OCRDataLoader():
     def __init__(self, 
-                 annotation_path, 
+                 annotation_paths, 
                  image_height, 
                  image_width, 
                  table_path, 
@@ -15,7 +15,7 @@ class OCRDataLoader():
                  shuffle=False, 
                  repeat=1):
         
-        imgpaths, labels = self.read_imagepaths_and_labels(annotation_path)
+        imgpaths, labels = self.read_imagepaths_and_labels(annotation_paths)
         self.batch_size = batch_size
         self.image_width = image_width
         self.image_height = image_height

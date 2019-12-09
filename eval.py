@@ -8,7 +8,7 @@ from model import CRNN
 from dataset import OCRDataLoader, map_to_chars
 
 parser = argparse.ArgumentParser(description="Process some integers.")
-parser.add_argument("-p", "--annotation_path", type=str, help="The path of annnotation file.")
+parser.add_argument("-p", "--annotation_paths", type=str, help="The paths of annnotation file.")
 parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
 parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
 parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
@@ -44,7 +44,7 @@ def decode_and_count(decoded, Y, mapper):
     return count
 
 if __name__ == "__main__":
-    dataloader = OCRDataLoader(args.annotation_path, 
+    dataloader = OCRDataLoader(args.annotation_paths, 
                                args.image_height, 
                                args.image_width, 
                                table_path=args.table_path,
