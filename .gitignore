@@ -10,3 +10,4 @@ tf_ckpts/
 saved_model/
 logs/
 *.tflite
+*.h5
