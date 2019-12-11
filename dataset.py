@@ -55,10 +55,10 @@ class OCRDataLoader():
             imgpaths_local = content[:, 0]
             # Parse MjSynth dataset. format: XX_label_XX.jpg XX
             # URL: https://www.robots.ox.ac.uk/~vgg/data/text/            
-            # labels_local = [line.split("_")[1] for line in imgpaths_local]
+            labels_local = [line.split("_")[1] for line in imgpaths_local]
 
             # Parse example dataset. format: XX.jpg label
-            labels_local = content[:, 1]
+            # labels_local = content[:, 1]
 
             imgpaths_local = [os.path.join(annotation_folder, line) for line in imgpaths_local]
             imgpaths.extend(imgpaths_local)

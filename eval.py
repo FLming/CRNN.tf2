@@ -14,6 +14,7 @@ parser.add_argument("-w", "--image_width", type=int, default=100, help="Image wi
 parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
 parser.add_argument("--checkpoint", type=str, help="The checkpoint path.")
 parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change, you should change the structure of CNN.")
+parser.add_argument("--backbone", type=str, default="VGG", help="The backbone of CRNNs, available now is VGG and ResNet.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     print("Start at {}".format(localtime))
     
-    model = CRNN(NUM_CLASSES)
+    model = CRNN(NUM_CLASSES, args.backbone)
     model.summary()
 
     checkpoint = tf.train.Checkpoint(model=model)

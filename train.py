@@ -19,6 +19,7 @@ parser.add_argument("--checkpoint", type=str, help="The checkpoint path. (Restor
 parser.add_argument("--max_to_keep", type=int, default=5, help="Max num of checkpoint to keep.")
 parser.add_argument("--save_freq", type=int, default=1, help="Save and validate interval.")
 parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change this, you should change the structure of CNN.")
+parser.add_argument("--backbone", type=str, default="VGG", help="The backbone of CRNNs, available now is VGG and ResNet.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
@@ -76,9 +77,13 @@ if __name__ == "__main__":
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     print("Start at {}".format(localtime))
 
-    model = CRNN(NUM_CLASSES)
+    model = CRNN(NUM_CLASSES, args.backbone)
     model.summary()
-    optimizer = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(args.learning_rate,
+                                                                 decay_steps=100000,
+                                                                 decay_rate=0.96,
+                                                                 staircase=True)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
     checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     if args.checkpoint:

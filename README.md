@@ -1,6 +1,7 @@
-# Convolutional Recurrent Neural Network - tensorflow 2.0
+# Convolutional Recurrent Neural Network for Scene Text Recognize - tensorflow 2
 
-This repo is a re-implement of [CRNN](http://arxiv.org/abs/1507.05717), [authors repo](https://github.com/bgshih/crnn).
+This repo is a implement of [CRNN](http://arxiv.org/abs/1507.05717), [authors repo](https://github.com/bgshih/crnn).
+And this net have VGG and ResNet backbone([reference](http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf)).
 
 ## Data prepare
 
@@ -41,7 +42,7 @@ The training process can be viewed using tensorboard
 tensorboard --logdir=tensorboard/
 ```
 
-![tensorboard](example/images/tensorboard.png)
+![tensorboard](doc/tensorboard.png)
 
 ## Eval
 
@@ -73,3 +74,8 @@ Please refer to the official website for [installation](https://www.tensorflow.o
 ```bash
 tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
 ```
+
+## Nets
+
+Add backbone([VGG](doc/VGG_CRNN.png) or [ResNet](doc/ResNet_CRNN.png)) arg to train can change the backbone of the net.
+Network structure can be viewed at doc folder.
