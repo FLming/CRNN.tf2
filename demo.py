@@ -3,14 +3,12 @@ import time
 
 import tensorflow as tf
 
+import base_arg
 from dataset import map_to_chars
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(parents=[base_arg.parser])
 parser.add_argument("-i", "--image_path", type=str, required=True, help="Image file path.")
-parser.add_argument("-t", "--table_path", type=str, required=True, help="The path of table file.")
-parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
 parser.add_argument("--model", type=str, required=True, help="The SavedModel path or h5 file.")
-parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change this, you should change the structure of CNN.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:

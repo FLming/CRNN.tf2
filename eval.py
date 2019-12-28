@@ -4,17 +4,14 @@ import time
 import numpy as np
 import tensorflow as tf
 
+import base_arg
 from model import CRNN
 from dataset import OCRDataLoader, map_and_count
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--annotation_paths", type=str, help="The paths of annnotation file.")
-parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
-parser.add_argument("-w", "--image_width", type=int, default=100, help="Image width(>=16).")
-parser.add_argument("-b", "--batch_size", type=int, default=128, help="Batch size.")
-parser.add_argument("--checkpoint", type=str, help="The checkpoint path.")
-parser.add_argument("--image_height", type=int, default=32, help="Image height(32). If you change, you should change the structure of CNN.")
-parser.add_argument("--backbone", type=str, default="VGG", help="The backbone of CRNNs, available now is VGG and ResNet.")
+parser = argparse.ArgumentParser(parents=[base_arg.parser])
+parser.add_argument("-a", "--annotation_paths", type=str, required=True, help="The paths of annnotation file.")
+parser.add_argument("-b", "--batch_size", type=int, default=256, help="Batch size.")
+parser.add_argument("--checkpoint", type=str, required=True, help="The checkpoint path.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:

@@ -2,13 +2,13 @@ import argparse
 
 import tensorflow as tf
 
+import base_arg
 from model import CRNN
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--table_path", type=str, help="The path of table file.")
-parser.add_argument("--checkpoint", type=str, help="The checkpoint path.")
-parser.add_argument("-f", "--format", type=str, help="Format H5 or SavedModel(tf).")
-parser.add_argument("-o", "--output", type=str, help="The output path.")
+parser = argparse.ArgumentParser(parents=[base_arg.parser])
+parser.add_argument("--checkpoint", type=str, required=True, help="The checkpoint path.")
+parser.add_argument("-f", "--format", type=str, choices=("tf", "h5"), required=True, help="Format H5 or SavedModel(tf).")
+parser.add_argument("-o", "--output", type=str, required=True, help="The output path.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
@@ -16,7 +16,7 @@ with open(args.table_path, "r") as f:
 NUM_CLASSES = len(INT_TO_CHAR)
 
 if __name__ == "__main__":
-    model = CRNN(NUM_CLASSES)
+    model = CRNN(NUM_CLASSES, args.backbone)
 
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(tf.train.latest_checkpoint(args.checkpoint))
@@ -26,9 +26,5 @@ if __name__ == "__main__":
         print("Initializing fail, check checkpoint")
         exit(0)
 
-    if args.format == "tf":
-        model.save(args.output, save_format="tf")
-        print("Format: SavedModel, saved to {}".format(args.output))
-    elif args.format == "h5":
-        model.save(args.output, save_format="h5")
-        print("Format: H5, saved to {}".format(args.output))
+    model.save(args.output, save_format=args.format)
+    print("Format: {}, saved to {}".format(args.format, args.output))

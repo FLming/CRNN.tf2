@@ -27,6 +27,11 @@ The format of annotation file can like:
 ```
 or MJSynth format or any format you want. see read_imagepaths_and_labels function.
 
+### Nets
+
+Add backbone([VGG](doc/VGG_CRNN.png) or [ResNet](doc/ResNet_CRNN.png)) arg to train can change the backbone of the net.
+Network structure can be viewed at doc folder.
+
 
 ## Train
 
@@ -34,7 +39,7 @@ or MJSynth format or any format you want. see read_imagepaths_and_labels functio
 python train.py -ta /PATH/TO/TXT -va /PATH/TO/TXT -t /PATH/TO/TABLE
 ```
 
-For other parameters please check the train.py
+For other parameters please check the `train.py -h`
 
 The training process can be viewed using tensorboard
 
@@ -47,15 +52,15 @@ tensorboard --logdir=tensorboard/
 ## Eval
 
 ```bash
-python eval.py -p /PATH/TO/TXT -t /PATH/TO/TABLE --checkpoint /PATH/TO/CHECKPOINT
+python eval.py -a /PATH/TO/TXT -t /PATH/TO/TABLE --checkpoint /PATH/TO/CHECKPOINT
 ```
 
-For other parameters please check the eval.py
+For other parameters please check the `eval.py -h`
 
 ## Demo inference
 
 ```bash
-python demo.py -i example/images/1_Paintbrushes_55044.jpg -t example/table.txt --checkpoint example/mjsynth/
+python demo.py -i example/images/1_Paintbrushes_55044.jpg -t example/table.txt --model /PATH/TO/MODEL
 ```
 
 then, You will see output:
@@ -69,13 +74,8 @@ then, You will see output:
 Please refer to the official website for [installation](https://www.tensorflow.org/tfx/serving/setup).
 
 1. First you should pick a good model.
-2. convert checkpoint to SavedModel
+2. convert checkpoint to SavedModel by converter.py
 3. Just run tensorflow serving by 
 ```bash
 tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
 ```
-
-## Nets
-
-Add backbone([VGG](doc/VGG_CRNN.png) or [ResNet](doc/ResNet_CRNN.png)) arg to train can change the backbone of the net.
-Network structure can be viewed at doc folder.
