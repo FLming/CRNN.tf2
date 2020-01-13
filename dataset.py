@@ -79,6 +79,9 @@ class OCRDataLoader():
         return image, label
 
     def _convert_label(self, image, label):
+        # According to official document, only dense tensor will run on GPU
+        # or TPU, but I have tried convert label to dense tensor by `to_tensor`
+        # and `row_lengths`, the speed of training step slower than sparse.
         chars = tf.strings.unicode_split(label, input_encoding="UTF-8")
         mapped_label = tf.ragged.map_flat_values(self.table.lookup, chars)
         sparse_label = mapped_label.to_sparse()

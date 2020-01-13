@@ -95,7 +95,7 @@ def val_one_step(model, x, y):
 if __name__ == "__main__":
     train_dl, val_dl = dataloader()
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-    print("Start at {}".format(localtime))
+    print(f"Start at {localtime}")
 
     model = CRNN(NUM_CLASSES, args.backbone)
     model.summary()
