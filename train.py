@@ -74,6 +74,16 @@ def train_one_step(model, optimizer, x, y):
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
+def train(model, optimizer, dataset, log_freq=10):
+    avg_loss = tf.keras.metrics.Mean(name="loss", dtype=tf.float32)
+    for x, y in dataset:
+        loss = train_one_step(model, optimizer, x, y)
+        avg_loss.update_state(loss)
+        if tf.equal(optimizer.iterations % log_freq, 0):
+            tf.summary.scalar("loss", avg_loss.result(), 
+                              step=optimizer.iterations)
+            avg_loss.reset_states()
+
 @tf.function
 def val_one_step(model, x, y):
     logits = model(x, training=False)
@@ -91,6 +101,19 @@ def val_one_step(model, x, y):
         sequence_length=logit_length,
         merge_repeated=True)
     return loss, decoded
+
+def val(model, dataset, step, num_samples):
+    avg_loss = tf.keras.metrics.Mean(name="loss", dtype=tf.float32)
+    num_correct_samples = 0
+    for x, y in dataset:
+        loss, decoded = val_one_step(model, x, y)
+        cnt = map_and_count(decoded, y, INT_TO_CHAR)
+        avg_loss.update_state(loss)
+        num_correct_samples += cnt
+    tf.summary.scalar("loss", avg_loss.result(), step=step)
+    accuracy = num_correct_samples / num_samples * 100
+    tf.summary.scalar("accuracy", accuracy, step=step)
+    avg_loss.reset_states()
 
 if __name__ == "__main__":
     train_dl, val_dl = dataloader()
@@ -125,30 +148,13 @@ if __name__ == "__main__":
     val_summary_writer = tf.summary.create_file_writer(
         f"logs/{localtime}/val")
 
-    avg_loss = tf.keras.metrics.Mean(name="loss")
-
     for epoch in range(1, args.epochs + 1):
         with train_summary_writer.as_default():
-            for x, y in train_dl():
-                loss = train_one_step(model, optimizer, x, y)
-                avg_loss.update_state(loss)
-                tf.summary.scalar("loss", loss, optimizer.iterations)
-            tf.summary.scalar("avg_loss", avg_loss.result(), epoch)
-        avg_loss.reset_states()
+            train(model, optimizer, train_dl())  
         if not (epoch - 1) % args.save_freq:
             checkpoint_path = manager.save(checkpoint_number=epoch)
             print(f"Model saved to {checkpoint_path}")
             if val_dl is not None:
-                num_correct_samples = 0
                 with val_summary_writer.as_default():
-                    for x, y in val_dl():
-                        loss, decoded = val_one_step(model, x, y)
-                        cnt = map_and_count(decoded, y, INT_TO_CHAR)
-                        avg_loss.update_state(loss)
-                        num_correct_samples += cnt
-                    tf.summary.scalar("avg_loss", avg_loss.result(), epoch)
-                    tf.summary.scalar("val_accuracy(line, greedy decoder)",
-                                      num_correct_samples / len(val_dl) * 100,
-                                      step=epoch)
-                avg_loss.reset_states()
+                    val(model, val_dl(), optimizer.iterations, len(val_dl))
         
