@@ -28,7 +28,7 @@ def eval_one_step(model, x, y):
     logits = model(x, training=False)
     logit_length = tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])
     decoded, neg_sum_logits = tf.nn.ctc_greedy_decoder(
-        inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
+        inputs=tf.transpose(logits, perm=[1, 0, 2]),
         sequence_length=logit_length,
         merge_repeated=True)
     return decoded, neg_sum_logits
@@ -65,8 +65,8 @@ if __name__ == "__main__":
         end_time = time.perf_counter()
         cnt = map_and_count(decoded, y, INT_TO_CHAR)
         num_correct_samples += cnt
-        print(f"[{index + 1) * args.batch_size} / {len(eval_dl)}] "
-              f"Num of correct samples: {num_correct_samples}"
+        print(f"[{(index + 1) * args.batch_size} / {len(eval_dl)}] "
+              f"Num of correct samples: {num_correct_samples} "
               f"({end_time - start_time:.4f}s / {args.batch_size})")
     print(f"Total: {len(eval_dl)}, Correct: {num_correct_samples}, "
-          f"Accuracy: {num_correct_samples / len(eval) * 100}")
+          f"Accuracy: {num_correct_samples / len(eval_dl) * 100}")

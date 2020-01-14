@@ -152,7 +152,7 @@ if __name__ == "__main__":
         with train_summary_writer.as_default():
             train(model, optimizer, train_dl())  
         if not (epoch - 1) % args.save_freq:
-            checkpoint_path = manager.save(checkpoint_number=epoch)
+            checkpoint_path = manager.save(optimizer.iterations)
             print(f"Model saved to {checkpoint_path}")
             if val_dl is not None:
                 with val_summary_writer.as_default():
