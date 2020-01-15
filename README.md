@@ -1,7 +1,18 @@
-# Convolutional Recurrent Neural Network for Scene Text Recognize - tensorflow 2
+# Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
 This repo is a implement of [CRNN](http://arxiv.org/abs/1507.05717), [authors repo](https://github.com/bgshih/crnn).
 And this net have VGG and ResNet backbone([reference](http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf)).
+
+## Abstract
+
+### Requirements
+
+```
+python >= 3.6
+tensorflow >= 2.0.0
+```
+
+This repo aims to build a efficient, complete end-to-end text recognize network only by using the various components of tensorflow 2.
 
 ## Data prepare
 
@@ -60,13 +71,19 @@ For other parameters please check the `eval.py -h`
 ## Demo inference
 
 ```bash
-python demo.py -i example/images/1_Paintbrushes_55044.jpg -t example/table.txt --model /PATH/TO/MODEL
+python demo.py -i example/images/ -t example/table.txt --model /PATH/TO/MODEL
 ```
 
 then, You will see output:
 ```
-[Beam search] prediction: Paintbrushes, log probabilities: -0.0010947763221338391
-[Greedy] prediction: Paintbrushes, neg sum logits: -267.3738708496094
+*************** Greedy ***************
+Path: 1_Paintbrushes_55044.jpg, prediction: Paintbrushes
+Path: 2_Reimbursing_64165.jpg, prediction: Reimbursing
+Path: 3_Creationisms_17934.jpg, prediction: Creationisms
+*************** Beam search ***************
+Path: 1_Paintbrushes_55044.jpg, prediction: Paintbrushes
+Path: 2_Reimbursing_64165.jpg, prediction: Reimbursing
+Path: 3_Creationisms_17934.jpg, prediction: Creationisms
 ```
 
 ## Tensorflow serving
