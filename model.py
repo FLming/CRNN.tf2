@@ -111,12 +111,12 @@ def ResNet(input_tensor):
     return x
 
 def CRNN(num_classes, backbone="VGG"):
-    inputs = keras.Input(shape=(32, None, 1))
+    img_input = keras.Input(shape=(32, None, 1))
 
     if backbone == "VGG":
-        x = VGG(inputs)
+        x = VGG(img_input)
     elif backbone == "ResNet":
-        x = ResNet(inputs)
+        x = ResNet(img_input)
 
     x = keras.layers.Reshape((-1, 512))(x)
     x = keras.layers.Bidirectional(
@@ -126,7 +126,7 @@ def CRNN(num_classes, backbone="VGG"):
 
     outputs = keras.layers.Dense(units=num_classes)(x)
 
-    return keras.Model(inputs=inputs, outputs=outputs, name="CRNN")
+    return keras.Model(inputs=img_input, outputs=outputs, name="CRNN")
 
 if __name__ == "__main__":
     model = CRNN(10, backbone="VGG")
