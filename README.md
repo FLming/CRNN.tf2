@@ -1,7 +1,11 @@
 # Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
-This repo is a implement of [CRNN](http://arxiv.org/abs/1507.05717), [authors repo](https://github.com/bgshih/crnn).
-And this net have VGG and ResNet backbone([reference](http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf)).
+This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717), and 
+net have VGG and ResNet backbone([reference](http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf)).
+
+Official: [authors repo](https://github.com/bgshih/crnn).
+
+**I am building a [EAST network for scene text detection by tensorflow 2](https://github.com/FLming/EAST.tf2), if you are interested, welcome to build together**
 
 ## Abstract
 
@@ -11,6 +15,12 @@ And this net have VGG and ResNet backbone([reference](http://openaccess.thecvf.c
 python >= 3.6
 tensorflow >= 2.0.0
 ```
+
+### Features
+
+- Easy to understand
+- Easy to change the backbone
+- Easy to use other components of TensorFlow, such as serving
 
 This repo aims to build a efficient, complete end-to-end text recognize network only by using the various components of tensorflow 2.
 
