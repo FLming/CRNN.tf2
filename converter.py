@@ -3,11 +3,12 @@ import argparse
 
 import tensorflow as tf
 
-import arg
-from model import CRNN
+from model import crnn
 
-parser = argparse.ArgumentParser(parents=[arg.parser])
-parser.add_argument("--checkpoint", type=str, required=True, 
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--table_path", type=str, required=True, 
+                    help="The path of table file.")
+parser.add_argument("-c", "--checkpoint", type=str, required=True, 
                     help="The checkpoint path.")
 parser.add_argument("-f", "--format", type=str, choices=("tf", "h5"), 
                     required=True, help="Format H5 or SavedModel(tf).")
@@ -16,16 +17,17 @@ parser.add_argument("-o", "--output", type=str, required=True,
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
-    INT_TO_CHAR = [char.strip() for char in f]
-NUM_CLASSES = len(INT_TO_CHAR)
+    inv_table = [char.strip() for char in f]
+num_classes = len(inv_table)
 
 if __name__ == "__main__":
-    model = CRNN(NUM_CLASSES, args.backbone)
+    model = crnn(num_classes)
 
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(tf.train.latest_checkpoint(args.checkpoint))
     if tf.train.latest_checkpoint(args.checkpoint):
-        print(f"Restored from {tf.train.latest_checkpoint(args.checkpoint)}")
+        print("Restored from {}".format(
+            tf.train.latest_checkpoint(args.checkpoint)))
     else:
         print("Initializing fail, check checkpoint")
         sys.exit()

@@ -1,9 +1,6 @@
 # Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
-This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717), and 
-net have VGG and ResNet backbone([reference](http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf)).
-
-Official: [authors repo](https://github.com/bgshih/crnn).
+This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, build by tensorflow 2. This repository allows you to understand how to build an end-to-end text recognition network in a simple way. By the way, Here is official [repo](https://github.com/bgshih/crnn).
 
 **I am building a [EAST network for scene text detection by tensorflow 2](https://github.com/FLming/EAST.tf2), if you are interested, welcome to build together**
 
@@ -12,7 +9,6 @@ Official: [authors repo](https://github.com/bgshih/crnn).
 ### Requirements
 
 ```
-python >= 3.6
 tensorflow >= 2.0.0
 ```
 
@@ -21,16 +17,19 @@ tensorflow >= 2.0.0
 - Easy to understand
 - Easy to change the backbone
 - Easy to use other components of TensorFlow, such as serving
+- [x] Tensorflow serving
+- [ ] Tensorflow lite
+- [ ] Distributed training
 
-This repo aims to build a efficient, complete end-to-end text recognize network only by using the various components of tensorflow 2.
+This repo aims to build a simple, efficient, end-to-end text recognize network by using the various components of tensorflow 2.
 
 ## Data prepare
 
-In order to train this network, you should prepare a lookup table, images and labels. Example data both on example folder(copy from [MJSynth](https://www.robots.ox.ac.uk/~vgg/data/text/)).
+In order to train this network, you should prepare a lookup table, images and labels. Example is copy from [MJSynth](https://www.robots.ox.ac.uk/~vgg/data/text/).
 
 ### [Lookup table](./example/table.txt)
 
-See example. The file contains all characters and blank label(in the last or any place both ok, but I find tf decoders set it to last and can't change it.) Currently, you can write any word for blank.
+The file contains all characters and blank label (in the last or any place both ok, but I find tf decoders can't change it, so set it to last). Currently, you can write any word for blank.
 
 ### Image data
 
@@ -46,18 +45,17 @@ The format of annotation file can like:
 ```
 [Relative position of the image file] [lable]
 ```
-or MJSynth format or any format you want. see read_imagepaths_and_labels function.
+or MJSynth format or any format you want. see read_imagepaths_and_labels function in dataset.py file and add new parse for you data.
 
 ### Nets
 
-Add backbone([VGG](doc/VGG_CRNN.png) or [ResNet](doc/ResNet_CRNN.png)) arg to train can change the backbone of the net.
 Network structure can be viewed at doc folder.
 
 
 ## Train
 
 ```bash
-python train.py -ta /PATH/TO/TXT -va /PATH/TO/TXT -t /PATH/TO/TABLE
+python train.py -ta /PATH/TO/TXT -va /PATH/TO/TXT -tf the name of parse funcs -vf the name of parse funcs -t /PATH/TO/TABLE ...
 ```
 
 For other parameters please check the `train.py -h`
@@ -65,7 +63,7 @@ For other parameters please check the `train.py -h`
 The training process can be viewed using tensorboard
 
 ```bash
-tensorboard --logdir=tensorboard/
+tensorboard --logdir=logs/
 ```
 
 ![tensorboard](doc/tensorboard.png)
@@ -73,36 +71,42 @@ tensorboard --logdir=tensorboard/
 ## Eval
 
 ```bash
-python eval.py -a /PATH/TO/TXT -t /PATH/TO/TABLE --checkpoint /PATH/TO/CHECKPOINT
+python eval.py -a /PATH/TO/TXTs -f the name of parse funcs -t /PATH/TO/TABLE -c /PATH/TO/CHECKPOINT
 ```
 
 For other parameters please check the `eval.py -h`
 
+## Converte
+
+Before you depoly or demo, you should pick up a good weight, and use converter to make a h5 file or SavedModel
+```
+python converter.py -t /PATH/TO/TABLE -c /PATH/TO/CHECKPOINT -f tf/h5 -o /PATH/TO/OUTPUT 
+```
+
 ## Demo inference
 
 ```bash
-python demo.py -i example/images/ -t example/table.txt --model /PATH/TO/MODEL
+python demo.py -i /PATH/TO/images/ -t /PATH/TO/TABLE --model /PATH/TO/MODEL
 ```
 
 then, You will see output:
 ```
-*************** Greedy ***************
-Path: 1_Paintbrushes_55044.jpg, prediction: Paintbrushes
-Path: 2_Reimbursing_64165.jpg, prediction: Reimbursing
-Path: 3_Creationisms_17934.jpg, prediction: Creationisms
-*************** Beam search ***************
-Path: 1_Paintbrushes_55044.jpg, prediction: Paintbrushes
-Path: 2_Reimbursing_64165.jpg, prediction: Reimbursing
-Path: 3_Creationisms_17934.jpg, prediction: Creationisms
+Path: 1_Paintbrushes_55044.jpg
+        Greedy: Paintbrushes
+        Beam search: Paintbrushes
+Path: 2_Reimbursing_64165.jpg
+        Greedy: Reimbursing
+        Beam search: Reimbursing
+Path: 3_Creationisms_17934.jpg
+        Greedy: Creationisms
+        Beam search: Creationisms
 ```
 
 ## Tensorflow serving
 
 Please refer to the official website for [installation](https://www.tensorflow.org/tfx/serving/setup).
 
-1. First you should pick a good model.
-2. convert checkpoint to SavedModel by converter.py
-3. Just run tensorflow serving by 
+Just run tensorflow serving by 
 ```bash
 tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
 ```

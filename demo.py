@@ -4,27 +4,40 @@ import argparse
 
 import tensorflow as tf
 
-import arg
 from dataset import map_to_chars
 
-parser = argparse.ArgumentParser(parents=[arg.parser])
+parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--images", type=str, 
                     help="Images file path.")
-parser.add_argument("-a", "--annotation", type=str, help="Groundtruth file.")
+parser.add_argument("-t", "--table_path", type=str, required=True, 
+                    help="The path of table file.")
+parser.add_argument("-w", "--image_width", type=int, default=100, 
+                    help="Image width(>=16).")
+parser.add_argument("-k", "--keep_ratio", action="store_true",
+                    help="Whether keep the ratio.")
 parser.add_argument("--model", type=str, required=True, 
                     help="The SavedModel path or h5 file.")
 args = parser.parse_args()
 
 with open(args.table_path, "r") as f:
-    INT_TO_CHAR = [char.strip() for char in f]
-NUM_CLASSES = len(INT_TO_CHAR)
-BLANK_INDEX = NUM_CLASSES - 1 # Make sure the blank index is what.
+    inv_table = [char.strip() for char in f]
+num_classes = len(inv_table)
+blank_index = num_classes - 1
 
 def read_image(path):
     img = tf.io.read_file(path)
-    img = tf.io.decode_jpeg(img, channels=1)
+    try:
+        img = tf.io.decode_jpeg(img, channels=1)
+    except Exception:
+        print("Invalid image: {}".format(path))
+        global num_invalid
+        return tf.zeros((32, args.image_width, 1))
     img = tf.image.convert_image_dtype(img, tf.float32)
-    img = tf.image.resize(img, [args.image_height, args.image_width])
+    if args.keep_ratio:
+        width = round(32 * img.shape[1] / img.shape[0])
+    else: 
+        width = args.image_width
+    img = tf.image.resize(img, (32, width))
     return img
 
 def greedy_decode(logits):
@@ -33,8 +46,8 @@ def greedy_decode(logits):
         inputs=tf.transpose(logits, perm=[1, 0, 2]),
         sequence_length=logit_length,
         merge_repeated=True)
-    decoded = tf.sparse.to_dense(decoded[0], default_value=BLANK_INDEX).numpy()
-    decoded = map_to_chars(decoded, INT_TO_CHAR, blank_index=BLANK_INDEX)
+    decoded = tf.sparse.to_dense(decoded[0], default_value=blank_index).numpy()
+    decoded = map_to_chars(decoded, inv_table, blank_index)
     return decoded, neg_sum_logits
 
 def beam_search_decode(logits):
@@ -42,8 +55,8 @@ def beam_search_decode(logits):
     decoded, log_probabilities = tf.nn.ctc_beam_search_decoder(
         inputs=tf.transpose(logits, perm=[1, 0, 2]),
         sequence_length=logit_length)
-    decoded = tf.sparse.to_dense(decoded[0], default_value=BLANK_INDEX).numpy()
-    decoded = map_to_chars(decoded, INT_TO_CHAR, blank_index=BLANK_INDEX)
+    decoded = tf.sparse.to_dense(decoded[0], default_value=blank_index).numpy()
+    decoded = map_to_chars(decoded, inv_table, blank_index)
     return decoded, log_probabilities
 
 if __name__ == "__main__":
@@ -55,51 +68,18 @@ if __name__ == "__main__":
             imgs = list(map(read_image, img_paths))
             imgs = tf.stack(imgs)
         else:
+            img_paths = args.images
             img = read_image(args.images)
             imgs = tf.expand_dims(img, 0)
 
-    if args.annotation is not None:
-        # parse ICDAR2013 dataset gt.
-        with open(args.annotation) as f:
-            content = f.readlines()
-            content = [line.strip().split(",") for line in content]
-            gt = {v[0]: v[1].strip(' "') for v in content}
-    
     model = tf.keras.models.load_model(args.model)
     print("Restored from {}".format(args.model))
 
     logits = model(imgs, training=False)
 
-    decoded, neg_sum_logits = greedy_decode(logits)
-    count = 0
-    num_correct_g = 0
-    print("*************** Greedy ***************")
-    for path, pred in zip(imgs_path, decoded):
-        if args.annotation is not None:
-            if not gt[path].isalnum():
-                continue
-            if gt[path].lower() == pred.lower():
-                num_correct_g += 1
-            else:
-                print(f"Path: {path}, gt: {gt[path]}, prediction: {pred}")
-            count += 1
-        else:
-            print(f"Path: {path}, prediction: {pred}")
-    
-    decoded, log_probabilities = beam_search_decode(logits)
-    num_correct_b = 0
-    print("*************** Beam search ***************")
-    for path, pred in zip(imgs_path, decoded):
-        if args.annotation is not None:
-            if not gt[path].isalnum():
-                continue
-            if gt[path].lower() == pred.lower():
-                num_correct_b += 1
-            else:
-                print(f"Path: {path}, gt: {gt[path]}, prediction: {pred}")
-        else:
-            print(f"Path: {path}, prediction: {pred}")
-    
-    if args.annotation is not None:
-        print(f"[Summary] Greedy accuracy: {num_correct_g / count}"
-              f", beam search accuracy: {num_correct_b / count}")
+    g_decoded, neg_sum_logits = greedy_decode(logits)
+    b_decoded, log_probabilities = beam_search_decode(logits)
+    for path, g_pred, b_pred in zip(imgs_path, g_decoded, b_decoded):
+        print("Path: {}".format(path))
+        print("\tGreedy: {}".format(g_pred))
+        print("\tBeam search: {}".format(b_pred))

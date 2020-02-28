@@ -1,18 +1,25 @@
-import argparse
 import time
+import argparse
 
 import numpy as np
 import tensorflow as tf
 
-import arg
-from model import CRNN
+from model import crnn
 from dataset import OCRDataLoader, map_and_count
 
-parser = argparse.ArgumentParser(parents=[arg.parser])
+parser = argparse.ArgumentParser()
 parser.add_argument("-ta", "--train_annotation_paths", type=str, required=True, 
-                    help="The path of training data annnotation file.")
+                    nargs="+", help="The path of training data annnotation file.")
 parser.add_argument("-va", "--val_annotation_paths", type=str, 
-                    help="The path of val data annotation file.")
+                    nargs="+", help="The path of val data annotation file.")
+parser.add_argument("-tf", "--train_parse_funcs", type=str, required=True,
+                    nargs="+", help="The parse functions of annotaion files.")
+parser.add_argument("-vf", "--val_parse_funcs", type=str,
+                    nargs="+", help="The parse functions of annotaion files.")
+parser.add_argument("-t", "--table_path", type=str, required=True, 
+                    help="The path of table file.")
+parser.add_argument("-w", "--image_width", type=int, default=100, 
+                    help="Image width(>=16).")
 parser.add_argument("-b", "--batch_size", type=int, default=256, 
                     help="Batch size.")
 parser.add_argument("-e", "--epochs", type=int, default=5, 
@@ -27,34 +34,25 @@ parser.add_argument("--save_freq", type=int, default=1,
                     help="Save and validate interval.")
 args = parser.parse_args()
 
-with open(args.table_path, "r") as f:
-    INT_TO_CHAR = [char.strip() for char in f]
-NUM_CLASSES = len(INT_TO_CHAR)
-BLANK_INDEX = NUM_CLASSES - 1 # Make sure the blank index is what.
-
-def dataloader():
+def load_data():
     train_dl = OCRDataLoader(
         args.train_annotation_paths, 
-        args.image_height, 
-        args.image_width, 
-        table_path=args.table_path,
-        blank_index=BLANK_INDEX,
-        shuffle=True, 
-        batch_size=args.batch_size)
-    print(f"Num of training samples: {len(train_dl)}")
+        args.train_parse_funcs,
+        args.image_width,
+        args.table_path,
+        args.batch_size,
+        True)
+    print("Num of training samples: {}".format(len(train_dl)))
     if args.val_annotation_paths:
         val_dl = OCRDataLoader(
-            args.val_annotation_paths,
-            args.image_height,
+            args.val_annotation_paths, 
+            args.val_parse_funcs, 
             args.image_width,
-            table_path=args.table_path,
-            blank_index=BLANK_INDEX,
-            batch_size=args.batch_size)
-        print(f"Num of val samples: {len(val_dl)}")
-    else:
-        val_dl = None
-    print(f"Num of classes: {NUM_CLASSES}")
-    print(f"Blank index is {BLANK_INDEX}")
+            args.table_path,
+            args.batch_size)
+        print("Num of val samples: {}".format(len(val_dl)))
+    print("Num of classes: {}".format(train_dl.num_classes))
+    print("Blank index is {}".format(train_dl.blank_index))
     return train_dl, val_dl
 
 @tf.function
@@ -68,21 +66,27 @@ def train_one_step(model, optimizer, x, y):
             label_length=None,
             logit_length=logit_length,
             logits_time_major=False,
-            blank_index=BLANK_INDEX)
+            blank_index=-1)
         loss = tf.reduce_mean(loss)
     grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
-def train(model, optimizer, dataset, log_freq=10):
+def train(model, optimizer, dl, log_freq=10):
     avg_loss = tf.keras.metrics.Mean(name="loss", dtype=tf.float32)
-    for x, y in dataset:
+    steps = round(len(dl) / args.batch_size) + 1
+    for i, (x, y) in enumerate(dl()):
         loss = train_one_step(model, optimizer, x, y)
         avg_loss.update_state(loss)
         if tf.equal(optimizer.iterations % log_freq, 0):
+            print("{:.0%} Trainging... loss: {:.6f}".format(
+                (i + 1) / steps, avg_loss.result()), end='')
             tf.summary.scalar("loss", avg_loss.result(), 
                               step=optimizer.iterations)
             avg_loss.reset_states()
+            if i < steps - 1:
+                print(end='\r')
+    print()
 
 @tf.function
 def val_one_step(model, x, y):
@@ -94,7 +98,7 @@ def val_one_step(model, x, y):
         label_length=None,
         logit_length=logit_length,
         logits_time_major=False,
-        blank_index=BLANK_INDEX)
+        blank_index=-1)
     loss = tf.reduce_mean(loss)
     decoded, neg_sum_logits = tf.nn.ctc_greedy_decoder(
         inputs=tf.transpose(logits, perm=[1, 0, 2]),
@@ -102,26 +106,33 @@ def val_one_step(model, x, y):
         merge_repeated=True)
     return loss, decoded
 
-def val(model, dataset, step, num_samples):
+def val(model, dl, step):
     avg_loss = tf.keras.metrics.Mean(name="loss", dtype=tf.float32)
-    num_correct_samples = 0
-    for x, y in dataset:
+    steps = round(len(dl) / args.batch_size) + 1
+    total_cnt = 0
+    for i, (x, y) in enumerate(dl()):
         loss, decoded = val_one_step(model, x, y)
-        cnt = map_and_count(decoded, y, INT_TO_CHAR)
         avg_loss.update_state(loss)
-        num_correct_samples += cnt
+        cnt = map_and_count(decoded, y, dl.inv_table, dl.blank_index)
+        total_cnt += cnt
+        print("{:.0%} Valuating...".format((i + 1) / steps), end='')
+        if i < steps - 1:
+            print(end='\r')
+    accuracy = total_cnt / len(dl)
+    print("Total: {}, Accuracy: {:.2%}".format(total_cnt, accuracy))
     tf.summary.scalar("loss", avg_loss.result(), step=step)
-    accuracy = num_correct_samples / num_samples * 100
     tf.summary.scalar("accuracy", accuracy, step=step)
     avg_loss.reset_states()
 
-if __name__ == "__main__":
-    train_dl, val_dl = dataloader()
-    localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-    print(f"Start at {localtime}")
 
-    model = CRNN(NUM_CLASSES, args.backbone)
+if __name__ == "__main__":
+    train_dl, val_dl = load_data()
+    localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+    print("Start at {}".format(localtime))
+
+    model = crnn(train_dl.num_classes)
     model.summary()
+
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         args.learning_rate,
         decay_steps=10000,
@@ -136,7 +147,6 @@ if __name__ == "__main__":
         checkpoint, 
         directory="tf_ckpts/{}".format(localtime), 
         max_to_keep=args.max_to_keep)
-    
     checkpoint.restore(manager.latest_checkpoint)
     if manager.latest_checkpoint:
         print("Restored from {}".format(manager.latest_checkpoint))
@@ -149,12 +159,12 @@ if __name__ == "__main__":
         f"logs/{localtime}/val")
 
     for epoch in range(1, args.epochs + 1):
+        print("Epoch {}:".format(epoch))
         with train_summary_writer.as_default():
-            train(model, optimizer, train_dl())  
+            train(model, optimizer, train_dl)
         if not (epoch - 1) % args.save_freq:
             checkpoint_path = manager.save(optimizer.iterations)
-            print(f"Model saved to {checkpoint_path}")
+            print("Model saved to {}".format(checkpoint_path))
             if val_dl is not None:
                 with val_summary_writer.as_default():
-                    val(model, val_dl(), optimizer.iterations, len(val_dl))
-        
+                    val(model, val_dl, optimizer.iterations)

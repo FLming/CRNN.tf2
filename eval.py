@@ -1,72 +1,117 @@
 import sys
-import argparse
 import time
+import argparse
 
-import numpy as np
 import tensorflow as tf
 
-import arg
-from model import CRNN
-from dataset import OCRDataLoader, map_and_count
+from model import crnn
+from dataset import read_img_paths_and_labels, map_to_chars
 
-parser = argparse.ArgumentParser(parents=[arg.parser])
+parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--annotation_paths", type=str, required=True, 
-                    help="The paths of annnotation file.")
+                    nargs="+", help="The paths of annnotation file.")
+parser.add_argument("-f", "--parse_funcs", type=str, required=True,
+                    nargs="+", help="The parse functions of annotaion files.")
+parser.add_argument("-t", "--table_path", type=str, required=True, 
+                    help="The path of table file.")
+parser.add_argument("-w", "--image_width", type=int, default=100, 
+                    help="Image width(>=16).")
+parser.add_argument("-k", "--keep_ratio", action="store_true",
+                    help="Whether keep the ratio.")
 parser.add_argument("-b", "--batch_size", type=int, default=256, 
                     help="Batch size.")
-parser.add_argument("--checkpoint", type=str, required=True, 
+parser.add_argument("-c", "--checkpoint", type=str, required=True, 
                     help="The checkpoint path.")
 args = parser.parse_args()
 
-with open(args.table_path, "r") as f:
-    INT_TO_CHAR = [char.strip() for char in f]
-NUM_CLASSES = len(INT_TO_CHAR)
-BLANK_INDEX = NUM_CLASSES - 1 # Make sure the blank index is what.
+num_invalid = 0
 
-@tf.function
-def eval_one_step(model, x, y):
+def load_data():
+    img_paths, labels = read_img_paths_and_labels(
+        args.annotation_paths, 
+        args.parse_funcs)
+    with open(args.table_path) as f:
+        inv_table = [char.strip() for char in f]
+    num_classes = len(inv_table)
+    blank_index = num_classes - 1
+    print("Num of eval samples: {}".format(len(img_paths)))
+    print("Num of classes: {}".format(num_classes))
+    print("Blank index is {}".format(blank_index))
+    return img_paths, labels, inv_table, num_classes, blank_index
+
+def read_image(path):
+    img = tf.io.read_file(path)
+    try:
+        img = tf.io.decode_jpeg(img, channels=1)
+    except Exception:
+        print("Invalid image: {}".format(path))
+        global num_invalid
+        num_invalid += 1
+        return tf.zeros((32, args.image_width, 1))
+    img = tf.image.convert_image_dtype(img, tf.float32)
+    if args.keep_ratio:
+        width = round(32 * img.shape[1] / img.shape[0])
+    else: 
+        width = args.image_width
+    img = tf.image.resize(img, (32, width))
+    return img
+
+def eval_one_step(model, x):
     logits = model(x, training=False)
     logit_length = tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])
     decoded, neg_sum_logits = tf.nn.ctc_greedy_decoder(
         inputs=tf.transpose(logits, perm=[1, 0, 2]),
         sequence_length=logit_length,
         merge_repeated=True)
-    return decoded, neg_sum_logits
+    return decoded
+
+def eval(model, img_paths, labels, inv_table, blank_index):
+    cnt = 0
+    total_cnt = 0
+    batch_size = args.batch_size if not args.keep_ratio else 1
+    steps = round(len(img_paths) / batch_size) + 1
+    for i in range(steps):
+        start = time.perf_counter()
+        x = img_paths[i * batch_size:(i + 1) * batch_size]
+        if len(x) == 0:
+            continue
+        total_cnt += len(x)
+        x = list(map(read_image, x))
+        x = tf.stack(x)
+        y = labels[i * batch_size:(i + 1) * batch_size]
+
+        decoded = eval_one_step(model, x)
+        decoded = tf.sparse.to_dense(decoded[0], 
+                                     default_value=blank_index).numpy()
+        decoded = map_to_chars(decoded, inv_table, blank_index=blank_index)
+        for y_pred, y_true in zip(decoded, y):
+            if y_pred == y_true:
+                cnt += 1
+        end = time.perf_counter()
+        output = '{:.0%} Total: {}, Right: {}, S: {:.2f} images/s, Acc: {:.2%}'
+        print(output.format((i + 1) / steps, total_cnt - num_invalid, cnt, 
+                            batch_size / (end - start), 
+                            cnt / (total_cnt - num_invalid)), end='')
+        if i < steps - 1:
+            print(end='\r')
+    print()
 
 if __name__ == "__main__":
-    eval_dl = OCRDataLoader(
-        args.annotation_paths, 
-        args.image_height, 
-        args.image_width, 
-        table_path=args.table_path,
-        blank_index=BLANK_INDEX,
-        batch_size=args.batch_size)
-    print(f"Num of eval samples: {len(eval_dl)}")
-    print(f"Num of classes: {NUM_CLASSES}")
-    print(f"Blank index is {BLANK_INDEX}")
+    img_paths, labels, inv_table, num_classes, blank_index = load_data()
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     print(f"Start at {localtime}")
-    
-    model = CRNN(NUM_CLASSES, args.backbone)
+
+    model = crnn(num_classes)
     model.summary()
 
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint.restore(tf.train.latest_checkpoint(args.checkpoint))
     if tf.train.latest_checkpoint(args.checkpoint):
-        print(f"Restored from {tf.train.latest_checkpoint(args.checkpoint)}")
+        print("Restored from {}".format(
+            tf.train.latest_checkpoint(args.checkpoint)))
     else:
         print("Initializing fail, check checkpoint")
         sys.exit()
 
-    num_correct_samples = 0
-    for index, (x, y) in enumerate(eval_dl()):
-        start_time = time.perf_counter()
-        decoded, neg_sum_logits = eval_one_step(model, x, y)
-        end_time = time.perf_counter()
-        cnt = map_and_count(decoded, y, INT_TO_CHAR)
-        num_correct_samples += cnt
-        print(f"[{(index + 1) * args.batch_size} / {len(eval_dl)}] "
-              f"Num of correct samples: {num_correct_samples} "
-              f"({end_time - start_time:.4f}s / {args.batch_size})")
-    print(f"Total: {len(eval_dl)}, Correct: {num_correct_samples}, "
-          f"Accuracy: {num_correct_samples / len(eval_dl) * 100}")
+    print("Evaluating...")
+    eval(model, img_paths, labels, inv_table, blank_index)
