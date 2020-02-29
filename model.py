@@ -27,7 +27,7 @@ def original(input_tensor):
         filters=256, 
         kernel_size=3, 
         padding='same')(x)
-    x = layers.MaxPool2D(pool_size=(2, 1), strides=(2, 1), padding='same')(x)
+    x = layers.MaxPool2D(pool_size=(2, 2), strides=(2, 1), padding='same')(x)
 
     x = layers.Conv2D(
         filters=512, 
@@ -40,12 +40,11 @@ def original(input_tensor):
         filters=512, 
         kernel_size=3, 
         padding='same')(x)
-    x = layers.MaxPool2D(pool_size=(2, 1), strides=(2, 1), padding='same')(x)
+    x = layers.MaxPool2D(pool_size=(2, 2), strides=(2, 1), padding='same')(x)
 
     x = layers.Conv2D(
         filters=512, 
-        kernel_size=2, 
-        padding='same')(x)
+        kernel_size=2)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
     return x
