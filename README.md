@@ -39,13 +39,15 @@ The inputs of image height must equals 32 because of CNN construction. If you wa
 ![Reimbursing](example/images/2_Reimbursing_64165.jpg)
 ![Creationisms](example/images/3_Creationisms_17934.jpg)
 
-### [Lable data](./example/annotation.txt)
+### [Label data](./example/annotation.txt)
 
-The format of annotation file can like:
-```
-[Relative position of the image file] [lable]
-```
-or MJSynth format or any format you want. see read_imagepaths_and_labels function in dataset.py file and add new parse for you data.
+The format of annotation file is:
+
+1. example format: `XX.jpg label`
+2. mjsynth format: `XX_label_XX.jpg XX`
+3. icdar2013 format: `XX.png, "label"`
+
+or any format you want. see read_imagepaths_and_labels function in dataset.py file and add new parse for you data.
 
 ### Nets
 
