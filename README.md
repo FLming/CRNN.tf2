@@ -59,7 +59,7 @@ python train.py -ta /PATH/TO/TXT -va /PATH/TO/TXT -tf the name of parse funcs -v
 ```
 Example:
 ```
-python train.py -ta /data/mnt/ramdisk/max/90kDICT32px/annotation_train.txt -va /data/mnt/ramdisk/max/90kDICT32px/annotation_val.txt -tf mjsynth mjsynth -va /data/mnt/ramdisk/max/90kDICT32px/annotation_test.txt -vf mjsynth -t example/table.txt -e 30 --max_to_keep 25
+python train.py -ta /data/mnt/ramdisk/max/90kDICT32px/annotation_train.txt /data/mnt/ramdisk/max/90kDICT32px/annotation_val.txt -tf mjsynth mjsynth -va /data/mnt/ramdisk/max/90kDICT32px/annotation_test.txt -vf mjsynth -t example/table.txt -e 30 --max_to_keep 25
 ```
 The name of parse funcs I provide is mjsynth, icdar2013 and example.
 
