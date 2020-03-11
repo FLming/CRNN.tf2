@@ -3,6 +3,9 @@ import os
 import tensorflow as tf
 
 class OCRDataLoader():
+    """
+    OCR Data Loader, return tf.data.Dataset.
+    """
     def __init__(self, annotation_paths, parse_funcs, image_width, table_path,
                  batch_size=64, shuffle=False, repeat=1):
         img_paths, labels = read_img_paths_and_labels(
@@ -97,81 +100,68 @@ def read_img_paths_and_labels(annotation_paths, funcs):
         labels.extend(part_labels)
     return img_paths, labels
 
-def map_to_chars(inputs, table, blank_index=0, merge_repeated=False):
-    """Map to chars.
-    
-    Args:
-        inputs: list of char ids.
-        table: char map.
-        blank_index: the index of blank.
-        merge_repeated: True, Only if tf decoder is not used.
+class Decoder():
+    def __init__(self, table, blank_index=-1, merge_repeated=True):
+        """
+        
+        Args:
+            table: list, char map
+            blank_index: int(default: num_classes - 1), the index of blank 
+        label.
+            merge_repeated: bool
+        """
+        self.table = table
+        if blank_index == -1:
+            blank_index = len(table) - 1
+        self.blank_index = blank_index
+        self.merge_repeated = merge_repeated
 
-    Returns:
-        lines: list of string.    
-    """
-    lines = []
-    for line in inputs:
-        text = ""
-        previous_char = -1
-        for char_index in line:
-            if merge_repeated:
-                if char_index == previous_char:
+    def map_to_chars(self, inputs, raw=False):
+        lines = []
+        for line in inputs:
+            text = ""
+            for char_index in line:
+                if char_index == self.blank_index and not raw:
                     continue
-            previous_char = char_index
-            if char_index == blank_index:
-                continue
-            text += table[char_index]            
-        lines.append(text)
-    return lines
+                text += self.table[char_index]            
+            lines.append(text)
+        return lines
 
-def map_and_count(decoded, Y, table, blank_index=0, merge_repeated=False):
-    decoded = tf.sparse.to_dense(decoded[0], default_value=blank_index).numpy()
-    decoded = map_to_chars(decoded, table, blank_index=blank_index, 
-                           merge_repeated=merge_repeated)
-    Y = tf.sparse.to_dense(Y, default_value=blank_index).numpy()
-    Y = map_to_chars(Y, table, blank_index=blank_index, 
-                     merge_repeated=merge_repeated)
-    cnt = 0
-    for y_pred, y in zip(decoded, Y):
-        if y_pred == y:
-            cnt += 1
-    return cnt
+    def decode(self, inputs, from_logits=True, method='greedy', raw=False):
+        if from_logits:
+            logit_length = tf.fill([tf.shape(inputs)[0]], tf.shape(inputs)[1])
+            if method == 'greedy':
+                decoded, _ = tf.nn.ctc_greedy_decoder(
+                    inputs=tf.transpose(inputs, perm=[1, 0, 2]),
+                    sequence_length=logit_length,
+                    merge_repeated=self.merge_repeated)
+            elif method == 'beam_search':
+                decoded, _ = tf.nn.ctc_beam_search_decoder(
+                    inputs=tf.transpose(inputs, perm=[1, 0, 2]),
+                    sequence_length=logit_length)
+            inputs = decoded[0]
+        decoded = tf.sparse.to_dense(inputs, 
+                                     default_value=self.blank_index).numpy()
+        decoded = self.map_to_chars(decoded, raw=raw)
+        return decoded
 
 if __name__ == "__main__":
-    import time 
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--annotation_paths", type=str, required=True, 
-                        help="The paths of annnotation file.")
+                    nargs="+", help="The paths of annnotation file.")
+    parser.add_argument("-f", "--parse_funcs", type=str, required=True,
+                        nargs="+", 
+                        help="The parse functions of annotaion files.")
     parser.add_argument("-t", "--table_path", type=str, required=True, 
                         help="The path of table file.")
     args = parser.parse_args()
 
-    def timeit(ds, steps):
-        overall_start = time.perf_counter()
-        it = iter(ds.take(steps + 1))
-        next(it)
+    dl = OCRDataLoader(args.annotation_paths, args.parse_funcs, 100, 
+                       args.table_path, batch_size=3)
 
-        start = time.perf_counter()
-        for i, (images, labels) in enumerate(it):
-            if i % 10 == 0:
-                print('.', end='')
-        print()
-        end = time.perf_counter()
+    decoder = Decoder(dl.inv_table)
 
-        duration = end - start
-        print("{} batches: {} s".format(steps, duration))
-        print("{:0.5f} Images/s".format(64 * steps / duration))
-        print("Total time: {}s".format(end - overall_start))
-
-    dl = OCRDataLoader(
-        args.annotation_paths, 
-        [parse_example], 
-        100, 
-        args.table_path,
-        repeat=None)
-    
-    timeit(dl(), 64)
     for x, y in dl().take(1):
-        print(tf.sparse.to_dense(y))
+        print(decoder.decode(y, from_logits=False))
