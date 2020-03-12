@@ -106,21 +106,27 @@ if __name__ == "__main__":
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     print("Start at {}".format(localtime))
     os.makedirs('h5/{}'.format(localtime), exist_ok=True)
-    save_path = ('h5/{}/'.format(localtime) + 
-                 "{epoch:03d}-{val_loss:.2f}-{val_word_accuracy:.2f}.h5")
 
     model = crnn(train_dl.num_classes)
     model.summary()
 
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        0.001,
+        decay_steps=100000,
+        decay_rate=0.96,
+        staircase=True)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+
     callbacks = [
         # In my computer, I don't know why use other format to save model is 
         # slower than h5 format, so I use h5 format to save model.
-        tf.keras.callbacks.ModelCheckpoint(save_path),
+        tf.keras.callbacks.ModelCheckpoint("h5/{}/".format(localtime) + 
+            "{epoch:03d}-{val_loss:.2f}-{val_word_accuracy:.2f}.h5"),
         tf.keras.callbacks.TensorBoard(log_dir="logs/{}".format(localtime), 
-                                       profile_batch=0)
+                                       histogram_freq=1, profile_batch=0)
     ]
 
-    model.compile(optimizer='adam', metrics=[WordAccuracy()])
+    model.compile(optimizer=optimizer, metrics=[WordAccuracy()])
     model.train_step = functools.partial(train_step, model)
     model.test_step = functools.partial(test_step, model)
     model.fit(train_dl(), epochs=args.epochs, callbacks=callbacks, 
