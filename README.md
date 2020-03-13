@@ -13,6 +13,7 @@ tensorflow 2.x
 ### Features
 
 - [x] Easy to change the backbone
+- [x] Keras training loop
 - [x] Tensorboard
 - [x] Tensorflow serving
 - [ ] Tensorflow lite
@@ -82,11 +83,16 @@ For other parameters please check the `eval.py -h`
 
 ## Demo inference
 
+Here I provide a model that trained on Mjsytch, this model can only predict 0-9, a-z and A-Z.
+
+- [baidu](https://pan.baidu.com/s/1j49KO0AJpVWQ94Yps-yYNw), code is `hhvm`
+- [google](https://drive.google.com/open?id=1qUoH3U86YwmsbRCt7vw8WwpZMXKRwDSp)
+
 ```bash
-python demo.py -i /PATH/TO/images/ -t /PATH/TO/TABLE --model /PATH/TO/MODEL
+python demo.py -i example/images/ -t example/table.txt -m model/
 ```
 
-then, You will see output:
+then, You will see output like this:
 ```
 Path: example/images/1_Paintbrushes_55044.jpg, greedy: Paintbrushes, beam search: Paintbrushes
 Path: example/images/2_Reimbursing_64165.jpg, greedy: Reimbursing, beam search: Reimbursing
