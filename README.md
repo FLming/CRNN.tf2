@@ -7,7 +7,7 @@ This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, 
 ### Requirements
 
 ```
-tensorflow 2.x
+tensorflow >=2.2, if you use Tensorflow 2.0, 2.1, you can check the custom_training_loop branch.
 ```
 
 ### Features
