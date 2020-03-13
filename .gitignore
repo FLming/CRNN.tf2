@@ -8,6 +8,7 @@ venv/
 
 tf_ckpts/
 saved_model/
+h5/
 logs/
 *.tflite
 *.h5

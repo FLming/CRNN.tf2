@@ -1,22 +1,19 @@
 # Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
-This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, build by tensorflow 2. This repository allows you to understand how to build an end-to-end text recognition network in a simple way. By the way, Here is official [repo](https://github.com/bgshih/crnn).
-
-**I am building a [EAST network for scene text detection by tensorflow 2](https://github.com/FLming/EAST.tf2), if you are interested, welcome to build together**
+This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, build by tensorflow 2. This repository may help you to understand how to build an end-to-end text recognition network in a simple way. By the way, Here is official [repo](https://github.com/bgshih/crnn).
 
 ## Abstract
 
 ### Requirements
 
 ```
-tensorflow >= 2.0.0
+tensorflow 2.x
 ```
 
 ### Features
 
-- Easy to understand
-- Easy to change the backbone
-- Easy to use other components of TensorFlow, such as serving
+- [x] Easy to change the backbone
+- [x] Tensorboard
 - [x] Tensorflow serving
 - [ ] Tensorflow lite
 - [ ] Distributed training
@@ -61,7 +58,7 @@ python train.py -ta /PATH/TO/TXT -va /PATH/TO/TXT -tf the name of parse funcs -v
 ```
 Example:
 ```
-python train.py -ta /data/mnt/ramdisk/max/90kDICT32px/annotation_train.txt /data/mnt/ramdisk/max/90kDICT32px/annotation_val.txt -tf mjsynth mjsynth -va /data/mnt/ramdisk/max/90kDICT32px/annotation_test.txt -vf mjsynth -t example/table.txt -e 30 --max_to_keep 25
+python train.py -ta /data/mnt/ramdisk/max/90kDICT32px/annotation_train.txt /data/mnt/ramdisk/max/90kDICT32px/annotation_val.txt -tf mjsynth mjsynth -va /data/mnt/ramdisk/max/90kDICT32px/annotation_test.txt -vf mjsynth -t example/table.txt -e 30
 ```
 The name of parse funcs I provide is mjsynth, icdar2013 and example.
 
@@ -78,17 +75,10 @@ tensorboard --logdir=logs/
 ## Eval
 
 ```bash
-python eval.py -a /PATH/TO/TXTs -f the name of parse funcs -t /PATH/TO/TABLE -c /PATH/TO/CHECKPOINT
+python eval.py -a /PATH/TO/TXTs -f the name of parse funcs -t /PATH/TO/TABLE -m /PATH/TO/MODEL
 ```
 
 For other parameters please check the `eval.py -h`
-
-## Converte
-
-Before you depoly or demo, you should pick up a good weight, and use converter to make a h5 file or SavedModel
-```
-python converter.py -t /PATH/TO/TABLE -c /PATH/TO/CHECKPOINT -f tf/h5 -o /PATH/TO/OUTPUT 
-```
 
 ## Demo inference
 
@@ -98,15 +88,16 @@ python demo.py -i /PATH/TO/images/ -t /PATH/TO/TABLE --model /PATH/TO/MODEL
 
 then, You will see output:
 ```
-Path: 1_Paintbrushes_55044.jpg
-        Greedy: Paintbrushes
-        Beam search: Paintbrushes
-Path: 2_Reimbursing_64165.jpg
-        Greedy: Reimbursing
-        Beam search: Reimbursing
-Path: 3_Creationisms_17934.jpg
-        Greedy: Creationisms
-        Beam search: Creationisms
+Path: example/images/1_Paintbrushes_55044.jpg, greedy: Paintbrushes, beam search: Paintbrushes
+Path: example/images/2_Reimbursing_64165.jpg, greedy: Reimbursing, beam search: Reimbursing
+Path: example/images/3_Creationisms_17934.jpg, greedy: Creationisms, beam search: Creationisms
+```
+
+## Converte
+
+Before you depoly, you should pick up a good weight, and converte model to SavedModel format in order to use other tensorflow components
+```
+python converter.py --model /PATH/TO/MODEL -o /PATH/TO/OUTPUT
 ```
 
 ## Tensorflow serving

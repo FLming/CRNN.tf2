@@ -116,18 +116,18 @@ class Decoder():
         self.blank_index = blank_index
         self.merge_repeated = merge_repeated
 
-    def map_to_chars(self, inputs, raw=False):
+    def map_to_chars(self, inputs):
         lines = []
         for line in inputs:
             text = ""
             for char_index in line:
-                if char_index == self.blank_index and not raw:
-                    continue
+                if char_index == self.blank_index:
+                    break
                 text += self.table[char_index]            
             lines.append(text)
         return lines
 
-    def decode(self, inputs, from_logits=True, method='greedy', raw=False):
+    def decode(self, inputs, from_logits=True, method='greedy'):
         if from_logits:
             logit_length = tf.fill([tf.shape(inputs)[0]], tf.shape(inputs)[1])
             if method == 'greedy':
@@ -142,7 +142,7 @@ class Decoder():
             inputs = decoded[0]
         decoded = tf.sparse.to_dense(inputs, 
                                      default_value=self.blank_index).numpy()
-        decoded = self.map_to_chars(decoded, raw=raw)
+        decoded = self.map_to_chars(decoded)
         return decoded
 
 if __name__ == "__main__":

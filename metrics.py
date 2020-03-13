@@ -18,10 +18,16 @@ class WordAccuracy(keras.metrics.Metric):
         """
         b = tf.shape(y_true)[0]
         max_width = tf.maximum(tf.shape(y_true)[1], tf.shape(y_pred)[1])
+        logit_length = tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1])        
+        decoded, _ = tf.nn.ctc_greedy_decoder(
+            inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
+            sequence_length=logit_length)
         y_true = tf.sparse.reset_shape(y_true, [b, max_width])
-        y_pred = tf.sparse.reset_shape(y_pred, [b, max_width])
+        y_pred = tf.sparse.reset_shape(decoded[0], [b, max_width])
         y_true = tf.sparse.to_dense(y_true, default_value=-1)
         y_pred = tf.sparse.to_dense(y_pred, default_value=-1)
+        y_true = tf.cast(y_true, tf.int32)
+        y_pred = tf.cast(y_pred, tf.int32)
         values = tf.math.reduce_any(tf.math.not_equal(y_true, y_pred), axis=1)
         values = tf.cast(values, tf.int32)
         values = tf.reduce_sum(values)

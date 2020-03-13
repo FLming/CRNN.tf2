@@ -1,66 +1,14 @@
-import time
 import os
+import time
 import argparse
-import functools
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.engine import data_adapter
+from tensorflow import keras
 
 from dataset import OCRDataLoader
 from model import crnn
+from losses import CTCLoss
 from metrics import WordAccuracy
-
-def train_step(self, data):
-    data = data_adapter.expand_1d(data)
-    x, y, sample_weight = data_adapter.unpack_x_y_sample_weight(data)
-
-    with tf.GradientTape() as tape:
-        logits = self(x, training=True)
-        logit_length = tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])
-        loss = tf.nn.ctc_loss(
-            labels=y,
-            logits=logits,
-            label_length=None,
-            logit_length=logit_length,
-            logits_time_major=False,
-            blank_index=-1)
-        loss = tf.reduce_mean(loss)
-    trainable_variables = self.trainable_variables
-    grads = tape.gradient(loss, trainable_variables)
-    self.optimizer.apply_gradients(zip(grads, trainable_variables))
-
-    decoded, _ = tf.nn.ctc_greedy_decoder(
-        inputs=tf.transpose(logits, perm=[1, 0, 2]),
-        sequence_length=logit_length,
-        merge_repeated=True)
-
-    self.compiled_metrics.update_state(y, decoded[0], sample_weight)
-    return {**{m.name: m.result() for m in self.metrics}, 'loss': loss}
-
-def test_step(self, data):
-    data = data_adapter.expand_1d(data)
-    x, y, sample_weight = data_adapter.unpack_x_y_sample_weight(data)
-
-    logits = self(x, training=False)
-    logit_length = tf.fill([tf.shape(logits)[0]], tf.shape(logits)[1])
-    loss = tf.nn.ctc_loss(
-        labels=y,
-        logits=logits,
-        label_length=None,
-        logit_length=logit_length,
-        logits_time_major=False,
-        blank_index=-1)
-    loss = tf.reduce_mean(loss)
-
-    decoded, _ = tf.nn.ctc_greedy_decoder(
-        inputs=tf.transpose(logits, perm=[1, 0, 2]),
-        sequence_length=logit_length,
-        merge_repeated=True)
-
-    self.compiled_metrics.update_state(y, decoded[0], sample_weight)
-    return {**{m.name: m.result() for m in self.metrics}, 'loss': loss}
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -108,26 +56,20 @@ if __name__ == "__main__":
     os.makedirs('h5/{}'.format(localtime), exist_ok=True)
 
     model = crnn(train_dl.num_classes)
+    model.compile(optimizer=keras.optimizers.Adam(), 
+                loss=CTCLoss(), 
+                metrics=[WordAccuracy()])
+    
     model.summary()
-
-    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-        0.001,
-        decay_steps=100000,
-        decay_rate=0.96,
-        staircase=True)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
     callbacks = [
         # In my computer, I don't know why use other format to save model is 
         # slower than h5 format, so I use h5 format to save model.
-        tf.keras.callbacks.ModelCheckpoint("h5/{}/".format(localtime) + 
+        keras.callbacks.ModelCheckpoint("h5/{}/".format(localtime) + 
             "{epoch:03d}-{val_loss:.2f}-{val_word_accuracy:.2f}.h5"),
-        tf.keras.callbacks.TensorBoard(log_dir="logs/{}".format(localtime), 
-                                       histogram_freq=1, profile_batch=0)
+        keras.callbacks.TensorBoard(log_dir="logs/{}".format(localtime), 
+                                    profile_batch=0)
     ]
 
-    model.compile(optimizer=optimizer, metrics=[WordAccuracy()])
-    model.train_step = functools.partial(train_step, model)
-    model.test_step = functools.partial(test_step, model)
     model.fit(train_dl(), epochs=args.epochs, callbacks=callbacks, 
               validation_data=val_dl())
