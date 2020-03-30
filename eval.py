@@ -37,4 +37,6 @@ model = keras.models.load_model(
 
 model.summary()
 
+model.compile(loss=CTCLoss(), metrics=[WordAccuracy()])
+
 model.evaluate(eval_dl())
