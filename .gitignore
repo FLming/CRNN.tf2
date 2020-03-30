@@ -7,7 +7,7 @@ __pycache__/
 venv/
 
 tf_ckpts/
-saved_model/
+saved_models/
 h5/
 logs/
 *.tflite
