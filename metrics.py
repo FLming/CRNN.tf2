@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
+
 class WordAccuracy(keras.metrics.Metric):
     """
     Calculate the word accuracy between y_true and y_pred.

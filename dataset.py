@@ -2,10 +2,12 @@ import os
 
 import tensorflow as tf
 
-class OCRDataLoader():
+
+class OCRDataLoader:
     """
     OCR Data Loader, return tf.data.Dataset.
     """
+    
     def __init__(self, annotation_paths, parse_funcs, image_width, table_path,
                  batch_size=64, shuffle=False, repeat=1):
         img_paths, labels = read_img_paths_and_labels(
@@ -49,7 +51,6 @@ class OCRDataLoader():
         chars = tf.strings.unicode_split(label, input_encoding="UTF-8")
         mapped_label = tf.ragged.map_flat_values(self.table.lookup, chars)
         sparse_label = mapped_label.to_sparse()
-        sparse_label = tf.cast(sparse_label, tf.int32)
         return image, sparse_label
 
     def __len__(self):
@@ -58,6 +59,7 @@ class OCRDataLoader():
     def __call__(self):
         """Return tf.data.Dataset."""
         return self.dataset
+
 
 def parse_mjsynth(annotation_path):
     """Parse MjSynth dataset. format: XX_label_XX.jpg XX.
@@ -70,6 +72,7 @@ def parse_mjsynth(annotation_path):
     labels = [v[0].split("_")[1] for v in content]
     return img_paths, labels
 
+
 def parse_example(annotation_path):
     """Parse example dataset. format: XX.jpg label"""
     dirname = os.path.dirname(annotation_path)
@@ -79,6 +82,7 @@ def parse_example(annotation_path):
     labels = [v[1] for v in content]
     return img_paths, labels
 
+
 def parse_icdar2013(annotation_path):
     dirname = os.path.dirname(annotation_path)
     with open(annotation_path) as f:
@@ -87,8 +91,10 @@ def parse_icdar2013(annotation_path):
     labels = [v[1].strip(' "') for v in content]
     return img_paths, labels
 
+
 parse_func_map = {"mjsynth": parse_mjsynth, "example": parse_example, 
                   "icdar2013": parse_icdar2013}
+
 
 def read_img_paths_and_labels(annotation_paths, funcs):
     """Read annotation files to get image paths and labels."""
@@ -100,7 +106,8 @@ def read_img_paths_and_labels(annotation_paths, funcs):
         labels.extend(part_labels)
     return img_paths, labels
 
-class Decoder():
+
+class Decoder:
     def __init__(self, table, blank_index=-1, merge_repeated=True):
         """
         
@@ -144,6 +151,7 @@ class Decoder():
                                      default_value=self.blank_index).numpy()
         decoded = self.map_to_chars(decoded)
         return decoded
+
 
 if __name__ == "__main__":
     import argparse

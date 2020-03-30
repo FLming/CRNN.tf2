@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
+
 class CTCLoss(keras.losses.Loss):
     def __init__(self, logits_time_major=False, blank_index=-1, 
                  reduction=keras.losses.Reduction.AUTO, name='ctc_loss'):
