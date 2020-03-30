@@ -10,15 +10,6 @@ This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, 
 tensorflow >=2.2, if you use Tensorflow 2.0, 2.1, you can check the custom_training_loop branch.
 ```
 
-### Features
-
-- [x] Easy to change the backbone
-- [x] Keras training loop
-- [x] Tensorboard
-- [x] Tensorflow serving
-- [ ] Tensorflow lite
-- [ ] Distributed training
-
 This repo aims to build a simple, efficient, end-to-end text recognize network by using the various components of tensorflow 2.
 
 ## Data prepare
@@ -101,16 +92,7 @@ Path: example/images/3_Creationisms_17934.jpg, greedy: Creationisms, beam search
 
 ## Converte
 
-Before you depoly, you should pick up a good weight, and converte model to SavedModel format in order to use other tensorflow components
+Before you depoly, you should pick up a good weight, and converte model to SavedModel format in order to use other tensorflow components(etc. `Tensorflow serving`、`Tensorflow.js`...)
 ```
 python converter.py --model /PATH/TO/MODEL -o /PATH/TO/OUTPUT
-```
-
-## Tensorflow serving
-
-Please refer to the official website for [installation](https://www.tensorflow.org/tfx/serving/setup).
-
-Just run tensorflow serving by 
-```bash
-tensorflow_model_server --rest_api_port=8501 --model_name=CRNN --model_base_path="/path/to/SavedModel/"
 ```
