@@ -54,7 +54,7 @@ localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 print("Start at {}".format(localtime))
 os.makedirs("saved_models/{}".format(localtime))
 saved_model_path = ("saved_models/{}/".format(localtime) + 
-    "{epoch:03d}_{word_accuracy::.4f}_{val_word_accuracy:.4f}.h5")
+    "{epoch:03d}_{word_accuracy:.4f}_{val_word_accuracy:.4f}.h5")
 
 model = crnn(train_dl.num_classes)
 model.compile(optimizer=keras.optimizers.Adam(0.0001), loss=CTCLoss(),
