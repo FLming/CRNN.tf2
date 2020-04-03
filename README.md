@@ -4,6 +4,8 @@ This is a re-implementation of [CRNN](http://arxiv.org/abs/1507.05717) network, 
 
 ## Abstract
 
+[文本识别网络CRNN——Tensorflow2实现简述](https://zhuanlan.zhihu.com/p/122512498)
+
 ### Requirements
 
 ```
