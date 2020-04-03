@@ -76,7 +76,7 @@ For other parameters please check the `eval.py -h`
 
 ## Demo inference
 
-Here I provide a model that trained on Mjsytch, this model can only predict 0-9, a-z and A-Z.
+Here I provide a model that trained on Mjsynth dataset(8M), this model can only predict 0-9, a-z and A-Z.
 
 - [baidu](https://pan.baidu.com/s/1j49KO0AJpVWQ94Yps-yYNw), code is `hhvm`
 - [google](https://drive.google.com/open?id=1qUoH3U86YwmsbRCt7vw8WwpZMXKRwDSp)
