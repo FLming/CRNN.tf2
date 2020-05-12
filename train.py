@@ -27,6 +27,8 @@ parser.add_argument("-w", "--image_width", type=int, default=100,
                     help="Image width(>=16).")
 parser.add_argument("-b", "--batch_size", type=int, default=256, 
                     help="Batch size.")
+parser.add_argument("-lr", "--learning_rate", type=float, default=0.001, 
+                    help="Learning rate.")
 parser.add_argument("-e", "--epochs", type=int, default=20, 
                     help="Num of epochs to train.")
 args = parser.parse_args()
@@ -39,6 +41,9 @@ train_dl = OCRDataLoader(
     args.batch_size,
     True)
 print("Num of training samples: {}".format(len(train_dl)))
+localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+saved_model_path = ("saved_models/{}/".format(localtime) + 
+    "{epoch:03d}_{word_accuracy:.4f}.h5")
 if args.val_annotation_paths:
     val_dl = OCRDataLoader(
         args.val_annotation_paths, 
@@ -47,25 +52,24 @@ if args.val_annotation_paths:
         args.table_path,
         args.batch_size)
     print("Num of val samples: {}".format(len(val_dl)))
+    saved_model_path = ("saved_models/{}/".format(localtime) + 
+        "{epoch:03d}_{word_accuracy:.4f}_{val_word_accuracy:.4f}.h5")
 else:
     val_dl = lambda: None
 
-localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 print("Start at {}".format(localtime))
 os.makedirs("saved_models/{}".format(localtime))
-saved_model_path = ("saved_models/{}/".format(localtime) + 
-    "{epoch:03d}_{word_accuracy:.4f}_{val_word_accuracy:.4f}.h5")
 
 model = crnn(train_dl.num_classes)
-model.compile(optimizer=keras.optimizers.Adam(0.0001), loss=CTCLoss(),
-              metrics=[WordAccuracy()])
+model.compile(optimizer=keras.optimizers.Adam(args.learning_rate), 
+              loss=CTCLoss(), metrics=[WordAccuracy()])
 
 model.summary()
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(saved_model_path),
     keras.callbacks.TensorBoard(log_dir="logs/{}".format(localtime), 
-                                histogram_freq=1, profile_batch=0)
+                                histogram_freq=1)
 ]
 
 model.fit(train_dl(), epochs=args.epochs, callbacks=callbacks,
