@@ -71,9 +71,10 @@ usage: eval.py [-h] -a ANNOTATION_PATHS [ANNOTATION_PATHS ...] -t TABLE_PATH
 
 For other parameters please check the `eval.py -h`
 
-## Deploy
+## Ecosystem
 
-Before you deploy, you should pick up a good weight, and converte model to SavedModel format in order to use other tensorflow components (e.g. `Tensorflow serving`、`Tensorflow.js` etc.)
+There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and converte model to SavedModel format by this command:
 ```
 usage: converter.py [-h] -m MODEL -o OUTPUT [--save_format SAVE_FORMAT]
 ```
+And now `Tensorflow lite` also can convert this model, that means you can deploy it to Android, iOS etc.
