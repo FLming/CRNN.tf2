@@ -6,9 +6,5 @@ __pycache__/
 .vscode/
 venv/
 
-tf_ckpts/
-saved_models/
-h5/
 logs/
-*.tflite
-*.h5
+saved_models/
