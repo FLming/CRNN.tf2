@@ -36,7 +36,7 @@ Path: example/images/3_Creationisms_17934.jpg, greedy: Creationisms, beam search
 ## Train
 
 Before you start training, maybe you should [prepare](#Data-prepare) data first.
-The training process can visualize in tensorboard. Because of that, we can check the a lot of things, such as profile.
+The training process can visualize in tensorboard. Because of that, we can check a lot of things, such as profile.
 
 ![Tensorboard](doc/tensorboard.png)
 
