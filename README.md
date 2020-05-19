@@ -62,6 +62,12 @@ The file contains all characters and blank label (in the last or any place both 
 
 We should write the image path and its corresponding label to a text file in a certain format such as example data. The data input pipeline will automatically detect the known format. Customization is also very simple, please check out the [dataset.py](dataset.py)
 
+#### Support format
+
+- MJSynth
+- ICDAR2013
+- [relative path] [label] such as [example.jpg awesome]
+
 ## Eval
 
 ```
