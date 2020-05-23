@@ -15,8 +15,6 @@ parser.add_argument("-w", "--image_width", type=int, default=100,
                     help="Image width, this parameter will affect the output "
                          "shape of the model, default is 100, so this model "
                          "can only predict up to 24 characters.")
-parser.add_argument("-k", "--keep_ratio", action="store_true",
-                    help="Whether keep the image ratio.")
 parser.add_argument("-m", "--model", type=str, required=True, 
                     help="The saved model.")
 parser.add_argument("--channels", type=int, default=1, help="Image channels, "
@@ -30,8 +28,6 @@ def read_img_and_preprocess(path):
     img = tf.io.read_file(path)
     img = tf.io.decode_jpeg(img, channels=args.channels)
     img = tf.image.convert_image_dtype(img, tf.float32)
-    if args.keep_ratio:
-        image_width = round(32 * img.shape[1] / img.shape[0])
     img = tf.image.resize(img, (32, args.image_width))
     return img
 
