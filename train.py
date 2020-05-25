@@ -26,31 +26,35 @@ parser.add_argument("-b", "--batch_size", type=int, default=256,
                     help="Batch size.")
 parser.add_argument("-lr", "--learning_rate", type=float, default=0.001, 
                     help="Learning rate.")
-parser.add_argument("-e", "--epochs", type=int, default=20, 
+parser.add_argument("-e", "--epochs", type=int, default=30, 
                     help="Num of epochs to train.")
 parser.add_argument("--channels", type=int, default=1, help="Image channels, "
                     "0: Use the number of channels in the image, "
                     "1: Grayscale image, "
                     "3: RGB image")
+parser.add_argument("--ignore_case", action="store_true", 
+                    help="Whether ignore case.(default false)")
 args = parser.parse_args()
 
 localtime = time.asctime()
 train_ds, size, num_classes = build_dataset(
     args.train_annotation_paths,
-    args.image_width,
     args.table_path,
+    args.image_width,
+    args.channels,
+    args.ignore_case,
     shuffle=True,
-    batch_size=args.batch_size,
-    channels=args.channels)
+    batch_size=args.batch_size)
 print("Num of training samples: {}".format(size))
 saved_model_prefix = "{epoch:03d}_{word_accuracy:.4f}"
 if args.val_annotation_paths:
     val_ds, size, num_classes = build_dataset(
         args.val_annotation_paths,
-        args.image_width,
         args.table_path,
-        batch_size=args.batch_size,
-        channels=args.channels)
+        args.image_width,
+        args.channels,
+        args.ignore_case,
+        batch_size=args.batch_size)
     print("Num of val samples: {}".format(size))
     saved_model_prefix = saved_model_prefix + "_{val_word_accuracy:.4f}"
 else:

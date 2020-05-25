@@ -4,17 +4,17 @@ import re
 import tensorflow as tf
 
 
-def read_annotation(p):
+def read_annotation(p, ignore_case):
     """Read an annotation file to get image paths and labels."""
     with open(p) as f:
         line = f.readline().strip()
         print(f"Annotation path: {p} format: ", end="")
-        if re.fullmatch(r".+_.+_.+\.\w+ .+", line):
+        if re.fullmatch(r".*/*\d+_.+_(\d+)\.\w+ \1", line):
             print("MJSynth")
             content = [l.strip().split() for l in f.readlines() + [line]]
             img_paths, labels = zip(*content)
             labels = [path.split("_")[1] for path in img_paths]
-        elif re.fullmatch(r'.+\.\w+, ".+"', line):
+        elif re.fullmatch(r'.*/*word_\d\.\w+, ".+"', line):
             print("ICDAR2013")
             content = [l.strip().split(",") for l in f.readlines() + [line]]
             img_paths, labels = zip(*content)
@@ -27,28 +27,30 @@ def read_annotation(p):
             raise ValueError("Unsupported annotation format")
     dirname = os.path.dirname(p)
     img_paths = [os.path.join(dirname, path) for path in img_paths]
+    if ignore_case:
+        labels = [label.lower() for label in labels]
     return img_paths, labels
 
 
-def read_annotations(paths):
+def read_annotations(paths, ignore_case):
     """Read annotation files to get image paths and labels."""
     img_paths = []
     labels = []
     for path in paths:
-        part_img_paths, part_labels = read_annotation(path)
+        part_img_paths, part_labels = read_annotation(path, ignore_case)
         img_paths.extend(part_img_paths)
         labels.extend(part_labels)
     return img_paths, labels
 
 
-def build_dataset(annotation_paths, image_width, table_path, shuffle=False, 
-                  batch_size=64, repeat=1, channels=1):
+def build_dataset(annotation_paths, table_path, image_width, image_channels=1, 
+                  ignore_case=True, shuffle=False, batch_size=64, repeat=1):
     """
     build ocr dataset, it will auto detect each annotation file's format.
     """
     def decode_and_resize(filename, label):
         img = tf.io.read_file(filename)
-        img = tf.io.decode_jpeg(img, channels=channels)
+        img = tf.io.decode_jpeg(img, channels=image_channels)
         img = tf.image.convert_image_dtype(img, tf.float32)
         img = tf.image.resize(img, (32, image_width))
         return img, label
@@ -59,7 +61,7 @@ def build_dataset(annotation_paths, image_width, table_path, shuffle=False,
         tokens = tokens.to_sparse()
         return img, tokens
 
-    img_paths, labels = read_annotations(annotation_paths)
+    img_paths, labels = read_annotations(annotation_paths, ignore_case)
     size = len(img_paths)
 
     table = tf.lookup.StaticHashTable(tf.lookup.TextFileInitializer(
@@ -69,16 +71,14 @@ def build_dataset(annotation_paths, image_width, table_path, shuffle=False,
     num_classes = table.size()
 
     ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
-    ds = ds.cache()
-    if shuffle:
-        ds = ds.shuffle(buffer_size=size)
     ds = ds.map(decode_and_resize, 
                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
     # Ignore the errors e.g. decode error or invalid data.
     ds = ds.apply(tf.data.experimental.ignore_errors())
+    if shuffle:
+        ds = ds.shuffle(buffer_size=10000)
     ds = ds.repeat(repeat).batch(batch_size)
-    ds = ds.map(tokenize,
-                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    ds = ds.map(tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
     return ds, size, num_classes
 

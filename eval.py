@@ -23,14 +23,17 @@ parser.add_argument("--channels", type=int, default=1, help="Image channels, "
                     "0: Use the number of channels in the image, "
                     "1: Grayscale image, "
                     "3: RGB image")
+parser.add_argument("--ignore_case", action="store_true", 
+                    help="Whether ignore case.(default false)")
 args = parser.parse_args()
 
 eval_ds, size, num_classes = build_dataset(
     args.annotation_paths,
-    args.image_width,
     args.table_path,
-    batch_size=args.batch_size,
-    channels=args.channels)
+    args.image_width,
+    args.channels,
+    args.ignore_case,
+    batch_size=args.batch_size)
 print("Num of eval samples: {}".format(size))
 
 model = keras.models.load_model(args.model, compile=False)
