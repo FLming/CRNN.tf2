@@ -10,16 +10,16 @@ This repo aims to build a simple, efficient, end-to-end text recognize network b
 
 ### Requirements
 
-tensorflow >=2.2
+tensorflow >= 2.2
 
 If you use Tensorflow 2.0, 2.1, you can check the custom_training_loop branch.
 
 ## Demo
 
-Here I provide a example model that trained on Mjsynth dataset, this model can only predict 0-9, a-z and A-Z.
+Here I provide a example model that trained on Mjsynth dataset, this model can only predict 0-9 and a-z(ignore case).
 
-- [baidu](https://pan.baidu.com/s/1j49KO0AJpVWQ94Yps-yYNw), code is `hhvm`
-- [google](https://drive.google.com/open?id=1qUoH3U86YwmsbRCt7vw8WwpZMXKRwDSp)
+- [百度, 提取码: g7dj](https://pan.baidu.com/s/1Gx29JwtQ4HX_53gUajHOAg)
+- [google](https://drive.google.com/open?id=1gTJ6Fgo7sfCJdA5ZUBkB76GtcC6Owqly)
 
 ### Command
 ```bash
@@ -28,9 +28,9 @@ python demo.py -i example/images/ -t example/table.txt -m MODEL
 
 Then, You will see output like this:
 ```
-Path: example/images/1_Paintbrushes_55044.jpg, greedy: Paintbrushes, beam search: Paintbrushes
-Path: example/images/2_Reimbursing_64165.jpg, greedy: Reimbursing, beam search: Reimbursing
-Path: example/images/3_Creationisms_17934.jpg, greedy: Creationisms, beam search: Creationisms
+Path: example/images/1_Paintbrushes_55044.jpg, greedy: paintbrushes, beam search: paintbrushes
+Path: example/images/3_Creationisms_17934.jpg, greedy: creationisms, beam search: creationisms
+Path: example/images/2_Reimbursing_64165.jpg, greedy: reimbursing, beam search: reimbursing
 ```
 
 ## Train
@@ -48,7 +48,7 @@ When image through the data input pipeline, the image shape will be resized to (
 python train.py -ta TRAIN_ANNOTATION_PATHS -va VAL_ANNOTATION_PATHS -t TABLE_PATH
 ```
 
-For more parameters, please refer to help
+For more parameters, please refer to the help.
 
 ## Data prepare
 
@@ -57,6 +57,16 @@ In order to train this network, you should prepare a lookup table, images and it
 ### [Lookup table](./example/table.txt)
 
 The file contains all characters and blank label (in the last or any place both ok, but I find tensorflow decoders can't change it now, so set it to last). By the way, you can write any word as blank.
+
+### [Image data]
+
+It is a End-to-End method, so we don't need to indicate the position of character in the image.
+
+![Paintbrushes](./example/images/1_Paintbrushes_55044.jpg)
+![Creationisms](./example/images/3_Creationisms_17934.jpg)
+![Reimbursing](./example/images/2_Reimbursing_64165.jpg)
+
+The labels corresponding to these three pictures are `Paintbrushes`, `Creationisms`, `Reimbursing`.
 
 ### [Label data](./example/annotation.txt)
 
@@ -74,8 +84,6 @@ We should write the image path and its corresponding label to a text file in a c
 usage: eval.py [-h] -a ANNOTATION_PATHS [ANNOTATION_PATHS ...] -t TABLE_PATH
                [-w IMAGE_WIDTH] [-b BATCH_SIZE] -m MODEL [--channels CHANNELS]
 ```
-
-For other parameters please check the `eval.py -h`
 
 ## Ecosystem
 
