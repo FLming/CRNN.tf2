@@ -58,9 +58,9 @@ In order to train this network, you should prepare a lookup table, images and it
 
 The file contains all characters and blank label (in the last or any place both ok, but I find tensorflow decoders can't change it now, so set it to last). By the way, you can write any word as blank.
 
-### [Image data]
+### Image data
 
-It is a End-to-End method, so we don't need to indicate the position of character in the image.
+It's an End-to-End method, so we don't need to indicate the position of character in the image.
 
 ![Paintbrushes](./example/images/1_Paintbrushes_55044.jpg)
 ![Creationisms](./example/images/3_Creationisms_17934.jpg)
