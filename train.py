@@ -34,6 +34,9 @@ parser.add_argument("--channels", type=int, default=1, help="Image channels, "
                     "3: RGB image")
 parser.add_argument("--ignore_case", action="store_true", 
                     help="Whether ignore case.(default false)")
+parser.add_argument("--restore", type=str, 
+                    help="The model for restore, even if the number of "
+                         "characters is different")
 args = parser.parse_args()
 
 localtime = time.asctime()
@@ -65,6 +68,8 @@ os.makedirs("saved_models/{}".format(localtime))
 print("Training start at {}".format(localtime))
 
 model = build_model(num_classes, channels=args.channels)
+if args.restore:
+    model.load_weights(args.restore, by_name=True, skip_mismatch=True)
 model.summary()
 model.compile(optimizer=keras.optimizers.Adam(args.learning_rate),
               loss=CTCLoss(), metrics=[WordAccuracy()])
