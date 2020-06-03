@@ -33,6 +33,8 @@ Path: example/images/3_Creationisms_17934.jpg, greedy: creationisms, beam search
 Path: example/images/2_Reimbursing_64165.jpg, greedy: reimbursing, beam search: reimbursing
 ```
 
+Sometimes beam search method will be better than greedy method, but it's costly.
+
 ## Train
 
 Before you start training, maybe you should [prepare](#Data-prepare) data first.
@@ -42,11 +44,15 @@ The training process can visualize in tensorboard. Because of that, we can check
 
 When image through the data input pipeline, the image shape will be resized to (32, width). The height is 32 beacause of CNN construction, the width will determine how many characters the model outputs at most.
 
+All predictable characters are defined by the [table.txt](./example/table.txt) file, make sure the file is the same as the file used during training.
+
 ### Command
 
 ```
 python train.py -ta TRAIN_ANNOTATION_PATHS -va VAL_ANNOTATION_PATHS -t TABLE_PATH
 ```
+
+Before starting training, we can use `restore` parameter to restore model in order to convergence fastly, even if the number of characters is different.
 
 For more parameters, please refer to the help.
 
@@ -85,10 +91,10 @@ usage: eval.py [-h] -a ANNOTATION_PATHS [ANNOTATION_PATHS ...] -t TABLE_PATH
                [-w IMAGE_WIDTH] [-b BATCH_SIZE] -m MODEL [--channels CHANNELS]
 ```
 
-## Ecosystem
+## Converte & Ecosystem
 
-There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and converte model to SavedModel format by this command:
+There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and converte model to `SavedModel`/`h5` format by this command, it will add the Softmax layer in the last and cull the optimizer:
 ```
-usage: converter.py [-h] -m MODEL -o OUTPUT [--save_format SAVE_FORMAT]
+usage: converter.py [-h] -m MODEL -o OUTPUT
 ```
 And now `Tensorflow lite` also can convert this model, that means you can deploy it to Android, iOS etc.
