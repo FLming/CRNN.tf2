@@ -18,17 +18,21 @@ class WordAccuracy(keras.metrics.Metric):
         decoded, _ = tf.nn.ctc_greedy_decoder(
             inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
             sequence_length=logit_length)
-        y_true = tf.sparse.reset_shape(y_true, [batch_size, max_width])
-        y_pred = tf.sparse.reset_shape(decoded[0], [batch_size, max_width])
-        y_true = tf.sparse.to_dense(y_true, default_value=-1)
-        y_pred = tf.sparse.to_dense(y_pred, default_value=-1)
-        y_pred = tf.cast(y_pred, tf.float32)
-        values = tf.math.reduce_any(tf.math.not_equal(y_true, y_pred), axis=1)
-        values = tf.cast(values, tf.float32)
-        values = tf.reduce_sum(values)
+        y_true = self.to_dense(y_true, [batch_size, max_width])
+        y_pred = self.to_dense(decoded[0], [batch_size, max_width])
+        num_errors = tf.math.reduce_any(
+            tf.math.not_equal(y_true, y_pred), axis=1)
+        num_errors = tf.cast(num_errors, tf.float32)
+        num_errors = tf.reduce_sum(num_errors)
         batch_size = tf.cast(batch_size, tf.float32)
         self.total.assign_add(batch_size)
-        self.count.assign_add(batch_size - values)
+        self.count.assign_add(batch_size - num_errors)
+
+    def to_dense(self, tensor, shape):
+        tensor = tf.sparse.reset_shape(tensor, shape)
+        tensor = tf.sparse.to_dense(tensor, default_value=-1)
+        tensor = tf.cast(tensor, tf.float32)
+        return tensor
 
     def result(self):
         return self.count / self.total
