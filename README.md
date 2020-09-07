@@ -82,7 +82,7 @@ The labels corresponding to these three pictures are `Paintbrushes`, `Creationis
 
 ### Annotation file
 
-We should write the image path and its corresponding label to a text file in a certain format such as example data. The data input pipeline will automatically detect the known format. Customization is also very simple, please check out the [dataset.py](./crnn/dataset_factory.py)
+We should write the image path and its corresponding label to a text file in a certain format such as example data. The data input pipeline will automatically detect the known format. Customization is also very simple, please check out the [dataset factory](./crnn/dataset_factory.py)
 
 #### Support format
 
