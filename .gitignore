@@ -8,3 +8,4 @@ venv/
 
 logs/
 saved_models/
+tests/

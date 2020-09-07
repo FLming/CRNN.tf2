@@ -1,10 +1,11 @@
 import argparse
 import time
-import os
+from pathlib import Path
 
+import tensorflow as tf
 from tensorflow import keras
 
-from dataset import DatasetBuilder
+from dataset_factory import DatasetBuilder
 from model import build_model
 from losses import CTCLoss
 from metrics import WordAccuracy
@@ -39,32 +40,30 @@ args = parser.parse_args()
 
 localtime = time.asctime()
 dataset_builder = DatasetBuilder(args.table_path, args.img_width, 
-                  args.img_channels, args.ignore_case)
-train_ds, train_size = dataset_builder.build(args.train_ann_paths, True, 
-                                             args.batch_size)
-print('Num of training samples: {}'.format(train_size))
-saved_model_prefix = '{epoch:03d}_{word_accuracy:.4f}'
+                                 args.img_channels, args.ignore_case)
+train_ds = dataset_builder.build(args.train_ann_paths, args.batch_size, True)
+saved_model_prefix = '{epoch}_{word_accuracy:.4f}'
 if args.val_ann_paths:
-    val_ds, val_size = dataset_builder.build(args.val_ann_paths, False,
-                                             args.batch_size)
-    print('Num of val samples: {}'.format(val_size))
+    val_ds = dataset_builder.build(args.val_ann_paths, args.batch_size, False)
     saved_model_prefix = saved_model_prefix + '_{val_word_accuracy:.4f}'
 else:
     val_ds = None
-saved_model_path = ('saved_models/{}/'.format(localtime) + 
-                    saved_model_prefix + '.h5')
-os.makedirs('saved_models/{}'.format(localtime))
+saved_model_path = f'saved_models/{localtime}/{saved_model_prefix}.h5'
+Path('saved_models', localtime).mkdir()
 print('Training start at {}'.format(localtime))
 
-model = build_model(dataset_builder.num_classes, channels=args.img_channels)
+model = build_model(dataset_builder.num_classes, 
+                    img_channels=args.img_channels)
 model.compile(optimizer=keras.optimizers.Adam(args.learning_rate),
               loss=CTCLoss(), metrics=[WordAccuracy()])
 
 if args.restore:
     model.load_weights(args.restore, by_name=True, skip_mismatch=True)
 
-callbacks = [keras.callbacks.ModelCheckpoint(saved_model_path),
-             keras.callbacks.TensorBoard(log_dir='logs/{}'.format(localtime),
-                                         profile_batch=0)]
+callbacks = [
+    keras.callbacks.ModelCheckpoint(saved_model_path),
+    keras.callbacks.TensorBoard(log_dir=f'logs/{localtime}')
+]
+
 model.fit(train_ds, epochs=args.epochs, callbacks=callbacks,
           validation_data=val_ds)

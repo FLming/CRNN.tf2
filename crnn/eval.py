@@ -2,7 +2,7 @@ import argparse
 
 from tensorflow import keras
 
-from dataset import DatasetBuilder
+from dataset_factory import DatasetBuilder
 from losses import CTCLoss
 from metrics import WordAccuracy
 
@@ -27,10 +27,8 @@ parser.add_argument('--ignore_case', action='store_true',
 args = parser.parse_args()
 
 dataset_builder = DatasetBuilder(args.table_path, args.img_width, 
-                  args.img_channels, args.ignore_case)
-eval_ds, size = dataset_builder.build(args.ann_paths, False, args.batch_size)
-print('Num of eval samples: {}'.format(size))
-
+                                 args.img_channels, args.ignore_case)
+eval_ds = dataset_builder.build(args.ann_paths, args.batch_size, False)
 model = keras.models.load_model(args.model, compile=False)
 model.compile(loss=CTCLoss(), metrics=[WordAccuracy()])
 model.evaluate(eval_ds)

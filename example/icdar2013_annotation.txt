@@ -1,0 +1,3 @@
+images/word_1.png, "Tiredness"
+images/word_2.png, "kills"
+images/word_3.png, "A"
