@@ -104,7 +104,7 @@ class DatasetBuilder():
                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
         # Ignore the errors e.g. decode error or invalid data.
         ds = ds.apply(tf.data.experimental.ignore_errors())
-        if self.preserve_aspect_ratio:
+        if self.preserve_aspect_ratio and batch_size != 1:
             ds = ds.filter(self._filter_img)      
             ds = ds.padded_batch(batch_size, drop_remainder=is_training)
         else:

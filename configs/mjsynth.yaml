@@ -37,4 +37,4 @@ eval:
         <<: *ds_builder
     ann_paths:
         - '/datasets/ICDAR/2013/Challenge2_Test_Task3_gt.txt'
-    batch_size: 1024
+    batch_size: 1
