@@ -1,0 +1,40 @@
+train:
+    dataset_builder: &ds_builder
+        table_path: 'example/table.txt'
+        # 1: Grayscale image, 3: RGB image
+        img_channels: 3
+        # The image that width greater than max img_width will be dropped.
+        # Only work with image width is null.
+        max_img_width: 300
+        ignore_case: True
+        # If it is not null, the image will be distorted.
+        img_width: null
+        # If change height, change the net.
+        img_height: 32
+    train_ann_paths:
+        - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_train.txt'
+        - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_val.txt'
+    val_ann_paths:
+        - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_test.txt'
+    batch_size_per_replica: 512
+    # The model for restore, even if the number of characters is different
+    restore: ''
+    learning_rate: 0.001
+    # Number of epochs to train.
+    epochs: 50
+    # Reduce learning rate when a metric has stopped improving.
+    reduce_lr:
+        factor: 0.5
+        patience: 5
+        min_lr: 0.0001
+    # Tensorboard
+    tensorboard:
+        histogram_freq: 1
+        profile_batch: 0
+
+eval:
+    dataset_builder:
+        <<: *ds_builder
+    ann_paths:
+        - '/datasets/ICDAR/2013/Challenge2_Test_Task3_gt.txt'
+    batch_size: 1024

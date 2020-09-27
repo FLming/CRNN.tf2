@@ -2,6 +2,7 @@ import argparse
 import time
 from pathlib import Path
 
+import yaml
 import tensorflow as tf
 from tensorflow import keras
 
@@ -11,59 +12,43 @@ from losses import CTCLoss
 from metrics import WordAccuracy
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-ta', '--train_ann_paths', type=str, 
-                    required=True, nargs='+', 
-                    help='The path of training data annnotation file.')
-parser.add_argument('-va', '--val_ann_paths', type=str, nargs='+', 
-                    help='The path of val data annotation file.')
-parser.add_argument('-t', '--table_path', type=str, required=True, 
-                    help='The path of table file.')
-parser.add_argument('-w', '--img_width', type=int, default=100, 
-                    help='Image width, this parameter will affect the output '
-                         'shape of the model, default is 100, so this model '
-                         'can only predict up to 24 characters.')
-parser.add_argument('-b', '--batch_size', type=int, default=256, 
-                    help='Batch size.')
-parser.add_argument('-lr', '--learning_rate', type=float, default=0.001, 
-                    help='Learning rate.')
-parser.add_argument('-e', '--epochs', type=int, default=30, 
-                    help='Num of epochs to train.')
-parser.add_argument('--img_channels', type=int, default=1, 
-                    help='0: Use the number of channels in the image, '
-                         '1: Grayscale image, 3: RGB image')
-parser.add_argument('--ignore_case', action='store_true', 
-                    help='Whether ignore case.(default false)')
-parser.add_argument('--restore', type=str, 
-                    help='The model for restore, even if the number of '
-                         'characters is different')
+parser.add_argument('--config', type=str, required=True, 
+                    help='The config file path.')
+parser.add_argument('--model_dir', type=str, required=True,
+                    help='The path to save the model and log')
 args = parser.parse_args()
 
+with open(args.config) as f:
+    config = yaml.load(f, Loader=yaml.Loader)['train']
+
 localtime = time.asctime()
-dataset_builder = DatasetBuilder(args.table_path, args.img_width, 
-                                 args.img_channels, args.ignore_case)
-train_ds = dataset_builder.build(args.train_ann_paths, args.batch_size, True)
-saved_model_prefix = '{epoch}_{word_accuracy:.4f}'
-if args.val_ann_paths:
-    val_ds = dataset_builder.build(args.val_ann_paths, args.batch_size, False)
-    saved_model_prefix = saved_model_prefix + '_{val_word_accuracy:.4f}'
-else:
-    val_ds = None
-saved_model_path = f'saved_models/{localtime}/{saved_model_prefix}.h5'
-Path('saved_models', localtime).mkdir()
+model_dir = Path(args.model_dir, localtime)
+model_dir.mkdir()
+model_prefix = '{epoch}_{word_accuracy:.4f}_{val_word_accuracy:.4f}'
+saved_model_path = f'{model_dir}/{model_prefix}.h5'
+strategy = tf.distribute.MirroredStrategy()
+batch_size = config['batch_size_per_replica'] * strategy.num_replicas_in_sync
 print('Training start at {}'.format(localtime))
 
-model = build_model(dataset_builder.num_classes, 
-                    img_channels=args.img_channels)
-model.compile(optimizer=keras.optimizers.Adam(args.learning_rate),
-              loss=CTCLoss(), metrics=[WordAccuracy()])
+dataset_builder = DatasetBuilder(**config['dataset_builder'])
+train_ds = dataset_builder.build(config['train_ann_paths'], batch_size, True)
+val_ds = dataset_builder.build(config['val_ann_paths'], batch_size, False)
 
-if args.restore:
-    model.load_weights(args.restore, by_name=True, skip_mismatch=True)
+with strategy.scope():
+    model = build_model(dataset_builder.num_classes, 
+                        img_channels=config['dataset_builder']['img_channels'])
+    model.compile(optimizer=keras.optimizers.Adam(config['learning_rate']),
+                  loss=CTCLoss(), metrics=[WordAccuracy()])
+
+if config['restore']:
+    model.load_weights(config['restore'], by_name=True, skip_mismatch=True)
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(saved_model_path),
-    keras.callbacks.TensorBoard(log_dir=f'logs/{localtime}')
-]
+    keras.callbacks.ReduceLROnPlateau(monitor='val_word_accuracy', mode='max',
+                                      **config['reduce_lr']),
+    keras.callbacks.TensorBoard(log_dir=str(model_dir), 
+                                **config['tensorboard'])]
 
-model.fit(train_ds, epochs=args.epochs, callbacks=callbacks,
+model.fit(train_ds, epochs=config['epochs'], callbacks=callbacks,
           validation_data=val_ds)
