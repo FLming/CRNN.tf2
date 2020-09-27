@@ -6,6 +6,4 @@ __pycache__/
 .vscode/
 venv/
 
-logs/
-saved_models/
-tests/
+models/
