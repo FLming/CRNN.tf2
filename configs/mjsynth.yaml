@@ -6,7 +6,7 @@ train:
         # The image that width greater than max img_width will be dropped.
         # Only work with image width is null.
         max_img_width: 300
-        ignore_case: True
+        ignore_case: true
         # If it is not null, the image will be distorted.
         img_width: null
         # If change height, change the net.
