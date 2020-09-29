@@ -35,6 +35,12 @@ Sometimes the beam search method will be better than the greedy method, but it's
 
 Before you start training, maybe you should [prepare](#Data-prepare) data first. All predictable characters are defined by the [table.txt](example/table.txt) file. The configuration of the training process is defined by the [yaml](configs/mjsynth.yaml) file.
 
+### Installation
+
+```bash
+$ pip install -r requirements.txt
+```
+
 This training script uses all GPUs by default, if you want to use a specific GPU, please set the `CUDA_VISIBLE_DEVICES` parameter.
 
 ```bash
@@ -48,7 +54,7 @@ The training process can visualize in Tensorboard.
 $ tensorboard --logdir PATH/TO/MODEL_DIR
 ```
 
-For more instructions, please refer to the [yaml](configs/mjsynth.yaml) file
+For more instructions, please refer to the [yaml](configs/mjsynth.yaml) file.
 
 ## Data prepare
 
