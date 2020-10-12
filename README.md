@@ -15,8 +15,8 @@ This repo aims to build a simple, efficient text recognize network by using the 
 
 Here I provide an example model that trained on the Mjsynth dataset, this model can only predict 0-9 and a-z(ignore case).
 
-- [百度, 提取码: g7dj](https://pan.baidu.com/s/1Gx29JwtQ4HX_53gUajHOAg)
-- [Google](https://drive.google.com/open?id=1gTJ6Fgo7sfCJdA5ZUBkB76GtcC6Owqly)
+- [百度, 密码: 7ucq](https://pan.baidu.com/s/1VFwoT798nODKz04scj5pMQ)
+- [Google](https://drive.google.com/file/d/1BrS5md14gzvtJIdqg7YNuGTHB27UeV70/view?usp=sharing)
 
 ```bash
 $ python crnn/demo.py -i example/images/ -t exmaple/table.txt -m PATH/TO/MODEL
@@ -24,9 +24,12 @@ $ python crnn/demo.py -i example/images/ -t exmaple/table.txt -m PATH/TO/MODEL
 
 Then, You will see output like this:
 ```
-Path: example/images/1_Paintbrushes_55044.jpg, greedy: paintbrushes, beam search: paintbrushes
-Path: example/images/3_Creationisms_17934.jpg, greedy: creationisms, beam search: creationisms
-Path: example/images/2_Reimbursing_64165.jpg, greedy: reimbursing, beam search: reimbursing
+Path: example/images/word_1.png, greedy pred: tiredness
+Path: example/images/word_3.png, greedy pred: a
+Path: example/images/2_Reimbursing_64165.jpg, greedy pred: reimbursing
+Path: example/images/word_2.png, greedy pred: kills
+Path: example/images/1_Paintbrushes_55044.jpg, greedy pred: paintbrushes
+Path: example/images/3_Creationisms_17934.jpg, greedy pred: creationisms
 ```
 
 Sometimes the beam search method will be better than the greedy method, but it's costly.

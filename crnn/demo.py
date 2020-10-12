@@ -51,6 +51,5 @@ for img_path in img_paths:
     img = read_img_and_preprocess(str(img_path))
     img = tf.expand_dims(img, 0)
     y_pred = model(img)
-    g_decode = decoder.decode(y_pred, method='greedy')[0]
-    b_decode = decoder.decode(y_pred, method='beam_search')[0]
-    print(f'Path: {img_path}, greedy: {g_decode}, beam search: {b_decode}')
+    y_pred = decoder.decode(y_pred, method='greedy')[0]
+    print(f'Path: {img_path}, greedy pred: {y_pred}')
