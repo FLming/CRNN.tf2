@@ -15,8 +15,8 @@ This repo aims to build a simple, efficient text recognize network by using the 
 
 Here I provide an example model that trained on the Mjsynth dataset, this model can only predict 0-9 and a-z(ignore case).
 
-- [百度, 密码: 7ucq](https://pan.baidu.com/s/1VFwoT798nODKz04scj5pMQ)
-- [Google](https://drive.google.com/file/d/1BrS5md14gzvtJIdqg7YNuGTHB27UeV70/view?usp=sharing)
+- [百度, 密码: nr4v](https://pan.baidu.com/s/1JSJFp5geICxInwbMOiT8_A)
+- [Google](https://drive.google.com/file/d/1rzEhUzJHfJNnRmcbofp3ZnnF64FjJnZ7/view?usp=sharing)
 
 ```bash
 $ python crnn/demo.py -i example/images/ -t exmaple/table.txt -m PATH/TO/MODEL
