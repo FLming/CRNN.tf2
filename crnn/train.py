@@ -7,9 +7,10 @@ import tensorflow as tf
 from tensorflow import keras
 
 from dataset_factory import DatasetBuilder
-from model import build_model
+from models import build_model
 from losses import CTCLoss
 from metrics import WordAccuracy
+from callbacks import XTensorBoard
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=Path, required=True, 
@@ -43,12 +44,13 @@ with strategy.scope():
 if config['restore']:
     model.load_weights(config['restore'], by_name=True, skip_mismatch=True)
 
+model.summary()
+
 callbacks = [
     keras.callbacks.ModelCheckpoint(saved_model_path),
     keras.callbacks.ReduceLROnPlateau(monitor='val_word_accuracy', mode='max',
                                       **config['reduce_lr']),
-    keras.callbacks.TensorBoard(log_dir=str(args.model_dir), 
-                                **config['tensorboard'])]
+    XTensorBoard(log_dir=str(args.model_dir), **config['tensorboard'])]
 
 model.fit(train_ds, epochs=config['epochs'], callbacks=callbacks,
           validation_data=val_ds)
