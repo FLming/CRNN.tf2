@@ -30,7 +30,8 @@ def read_annotation(path: Path):
         else:
             raise UnsupportedFormatError('Unsupported annotation format')
     img_paths = [str(path.parent / img_path) for img_path in img_paths]
-    print(f'Annotation path: {path}, format: {annotation_format}')
+    print(f'Annotation path: {path}, format: {annotation_format}, '
+          f'samples: {len(labels)}')
     return img_paths, labels
 
 
@@ -96,7 +97,7 @@ class DatasetBuilder():
         img_paths, labels = read_annotations(ann_paths)
         if self.ignore_case:
             labels = list(map(str.lower, labels))
-        print(f'Number of samples: {len(img_paths)}')
+        print(f'Total number of samples: {len(img_paths)}')
         ds = tf.data.Dataset.from_tensor_slices((img_paths, labels))
         if is_training:
             ds = ds.shuffle(buffer_size=10000)
@@ -105,7 +106,7 @@ class DatasetBuilder():
         # Ignore the errors e.g. decode error or invalid data.
         ds = ds.apply(tf.data.experimental.ignore_errors())
         if self.preserve_aspect_ratio and batch_size != 1:
-            ds = ds.filter(self._filter_img)      
+            ds = ds.filter(self._filter_img)
             ds = ds.padded_batch(batch_size, drop_remainder=is_training)
         else:
             ds = ds.batch(batch_size, drop_remainder=is_training)
