@@ -30,7 +30,7 @@ def read_img_and_preprocess(path, img_width=0, img_height=32):
         scale_factor = img_height / img_shape[0]
         img_width = scale_factor * tf.cast(img_shape[1], tf.float64)
         img_width = tf.cast(img_width, tf.int32)
-    img = tf.image.resize(img, (img_height, img_width)) / 255.0
+    img = tf.image.resize(img, (img_height, img_width))
     return img
 
 
