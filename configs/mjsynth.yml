@@ -1,13 +1,16 @@
+dataset_builder: &ds_builder
+    table_path: 'example/table.txt'
+    # If change image height(32), change the net.
+    # If image width is not null, the image will be distorted.
+    img_shape: [32, null, 3]
+    # The image that width greater than max img_width will be dropped.
+    # Only work with image width is null.
+    max_img_width: 300
+    ignore_case: true
+
 train:
-    dataset_builder: &ds_builder
-        table_path: 'example/table.txt'
-        # If change image height(32), change the net.
-        # If image width is not null, the image will be distorted.
-        img_shape: [32, null, 3]
-        # The image that width greater than max img_width will be dropped.
-        # Only work with image width is null.
-        max_img_width: 300
-        ignore_case: true
+    dataset_builder:
+        <<: *ds_builder
     train_ann_paths:
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_train.txt'
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_val.txt'
