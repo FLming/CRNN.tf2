@@ -5,7 +5,7 @@ from tensorflow import keras
 
 from dataset_factory import DatasetBuilder
 from losses import CTCLoss
-from metrics import WordAccuracy
+from metrics import SequenceAccuracy, EditDistance
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=str, required=True, 
@@ -20,5 +20,5 @@ with open(args.config) as f:
 dataset_builder = DatasetBuilder(**config['dataset_builder'])
 ds = dataset_builder.build(config['ann_paths'], config['batch_size'], False)
 model = keras.models.load_model(args.model, compile=False)
-model.compile(loss=CTCLoss(), metrics=[WordAccuracy()])
+model.compile(loss=CTCLoss(), metrics=[SequenceAccuracy(), EditDistance()])
 model.evaluate(ds)

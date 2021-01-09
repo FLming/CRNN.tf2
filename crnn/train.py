@@ -9,7 +9,7 @@ from tensorflow import keras
 from dataset_factory import DatasetBuilder
 from models import build_model
 from losses import CTCLoss
-from metrics import WordAccuracy
+from metrics import SequenceAccuracy
 from callbacks import XTensorBoard
 
 parser = argparse.ArgumentParser()
@@ -27,7 +27,7 @@ args.save_dir.mkdir(exist_ok=True)
 if list(args.save_dir.iterdir()):
     raise ValueError(f'{args.save_dir} is not a empty folder')
 shutil.copy(args.config, args.save_dir / args.config.name)
-model_prefix = '{epoch}_{word_accuracy:.4f}_{val_word_accuracy:.4f}'
+model_prefix = '{epoch}_{sequence_accuracy:.4f}_{val_sequence_accuracy:.4f}'
 model_path = f'{args.save_dir}/{model_prefix}.h5'
 strategy = tf.distribute.MirroredStrategy()
 batch_size = config['batch_size_per_replica'] * strategy.num_replicas_in_sync
@@ -40,7 +40,7 @@ with strategy.scope():
     model = build_model(dataset_builder.num_classes, 
                         config['dataset_builder']['img_shape'])
     model.compile(optimizer=keras.optimizers.Adam(config['learning_rate']),
-                  loss=CTCLoss(), metrics=[WordAccuracy()])
+                  loss=CTCLoss(), metrics=[SequenceAccuracy()])
 
 if config['restore']:
     model.load_weights(config['restore'], by_name=True, skip_mismatch=True)
