@@ -1,16 +1,16 @@
+dataset_builder: &ds_builder
+    table_path: 'example/table.txt'
+    # If change image height(32), change the net.
+    # If image width is not null, the image will be distorted.
+    img_shape: [32, null, 3]
+    # The image that width greater than max img_width will be dropped.
+    # Only work with image width is null.
+    max_img_width: 300
+    ignore_case: true
+
 train:
-    dataset_builder: &ds_builder
-        table_path: 'example/table.txt'
-        # 1: Grayscale image, 3: RGB image
-        img_channels: 3
-        # The image that width greater than max img_width will be dropped.
-        # Only work with image width is null.
-        max_img_width: 300
-        ignore_case: true
-        # If it is not null, the image will be distorted.
-        img_width: null
-        # If change height, change the net.
-        img_height: 32
+    dataset_builder:
+        <<: *ds_builder
     train_ann_paths:
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_train.txt'
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_val.txt'
@@ -23,11 +23,14 @@ train:
     # Number of epochs to train.
     epochs: 50
     # Reduce learning rate when a metric has stopped improving.
+    # ReduceLROnPlateau Arguments
+    # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau#arguments
     reduce_lr:
         factor: 0.5
         patience: 5
         min_lr: 0.0001
-    # Tensorboard
+    # TensorBoard Arguments
+    # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard#arguments_1
     tensorboard:
         histogram_freq: 1
         profile_batch: 0
@@ -37,4 +40,4 @@ eval:
         <<: *ds_builder
     ann_paths:
         - '/datasets/ICDAR/2013/Challenge2_Test_Task3_gt.txt'
-    batch_size: 1
+    batch_size: 128

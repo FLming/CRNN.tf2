@@ -1,6 +1,6 @@
 # Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
-![TensorFlow version](https://img.shields.io/badge/TensorFlow->=2.2-FF6F00?logo=tensorflow)
+![TensorFlow version](https://img.shields.io/badge/TensorFlow->=2.3-FF6F00?logo=tensorflow)
 ![Python version](https://img.shields.io/badge/Python->=3.6-3776AB?logo=python)
 [![Paper](https://img.shields.io/badge/paper-arXiv:1507.05717-B3181B?logo=arXiv)](https://arxiv.org/abs/1507.05717)
 [![Zhihu](https://img.shields.io/badge/知乎-文本识别网络CRNN—实现简述-blue?logo=zhihu)](https://zhuanlan.zhihu.com/p/122512498)
@@ -15,26 +15,24 @@ This repo aims to build a simple, efficient text recognize network by using the 
 
 Here I provide an example model that trained on the Mjsynth dataset, this model can only predict 0-9 and a-z(ignore case).
 
-**Note**. Because of compatibility, the trained model cannot be guaranteed to work on previous versions. It has been determined that the model trained in version 2.3 cannot work on version 2.2.
-
-- [百度, 密码: nr4v, TF2.3](https://pan.baidu.com/s/1JSJFp5geICxInwbMOiT8_A)
-- [Google, TF2.3](https://drive.google.com/file/d/1rzEhUzJHfJNnRmcbofp3ZnnF64FjJnZ7/view?usp=sharing)
+- [百度, 密码: a4ki](https://pan.baidu.com/s/19__FzoQxbCArf1gDm_ptPQ)
+- [Google drive](https://drive.google.com/file/d/1iQZxBovoGT-KDksR5f3PD1Avyiq3QJa-/view?usp=sharing)
 
 ```bash
-$ python crnn/demo.py -i example/images/ -t exmaple/table.txt -m PATH/TO/MODEL
+$ python tools/demo.py --images example/images/ --config configs/mjsynth.yml --model PATH/TO/MODEL
 ```
 
 Then, You will see output like this:
 ```
-Path: example/images/word_1.png, greedy pred: tiredness
-Path: example/images/word_3.png, greedy pred: a
-Path: example/images/2_Reimbursing_64165.jpg, greedy pred: reimbursing
-Path: example/images/word_2.png, greedy pred: kills
-Path: example/images/1_Paintbrushes_55044.jpg, greedy pred: paintbrushes
-Path: example/images/3_Creationisms_17934.jpg, greedy pred: creationisms
+Path: example/images/word_1.png, y_pred: [b'tiredness'], probability: [0.9998626]
+Path: example/images/word_3.png, y_pred: [b'a'], probability: [0.67493004]
+Path: example/images/2_Reimbursing_64165.jpg, y_pred: [b'reimbursing'], probability: [0.990946]
+Path: example/images/word_2.png, y_pred: [b'kills'], probability: [0.9994573]
+Path: example/images/1_Paintbrushes_55044.jpg, y_pred: [b'paintbrushes'], probability: [0.9984008]
+Path: example/images/3_Creationisms_17934.jpg, y_pred: [b'creationisms'], probability: [0.99792457]
 ```
 
-Sometimes the beam search method will be better than the greedy method, but it's costly.
+About decode methods, sometimes the beam search method will be better than the greedy method, but it's costly.
 
 ## Train
 
@@ -49,8 +47,7 @@ $ pip install -r requirements.txt
 This training script uses all GPUs by default, if you want to use a specific GPU, please set the `CUDA_VISIBLE_DEVICES` parameter.
 
 ```bash
-$ export CUDA_VISIBLE_DEVICES=0
-$ python crnn/train.py --config configs/mjsynth.yaml --model_dir PATH/TO/SAVE
+$ python crnn/train.py --config configs/mjsynth.yaml --save_dir PATH/TO/SAVE
 ```
 
 The training process can visualize in Tensorboard. 
@@ -59,7 +56,7 @@ The training process can visualize in Tensorboard.
 $ tensorboard --logdir PATH/TO/MODEL_DIR
 ```
 
-For more instructions, please refer to the [yaml](configs/mjsynth.yaml) file.
+For more instructions, please refer to the [config](configs/mjsynth.yaml) file.
 
 ## Data prepare
 
@@ -97,10 +94,10 @@ $ python crnn/eval.py --config PATH/TO/CONFIG_FILE --model PATH/TO/MODEL
 
 ## Converte & Ecosystem
 
-There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and convertes model to `SavedModel`/`h5` format by this command, it will add the Softmax layer in the last and cull the optimizer:
+There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and convertes model to `SavedModel`/`h5` format by this command, it will add the post processing layer in the last and cull the optimizer:
 
 ```bash
-$ python tools/converter.py --model PATH/TO/MODEL --output PATH/TO/OUTPUT
+$ python tools/export.py --model PATH/TO/MODEL --config PATH/TO/CONFIG_FILE --output PATH/TO/OUTPUT
 ```
 
 And now `Tensorflow lite` also can convert this model, that means you can deploy it to Android, iOS etc.

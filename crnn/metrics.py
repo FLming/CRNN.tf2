@@ -2,19 +2,18 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-class WordAccuracy(keras.metrics.Metric):
-    """
-    Calculate the word accuracy between y_true and y_pred.
-    """
-    def __init__(self, name='word_accuracy', **kwargs):
+class SequenceAccuracy(keras.metrics.Metric):
+    def __init__(self, name='sequence_accuracy', **kwargs):
         super().__init__(name=name, **kwargs)
         self.total = self.add_weight(name='total', initializer='zeros')
         self.count = self.add_weight(name='count', initializer='zeros')
                 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        batch_size = tf.shape(y_true)[0]
-        max_width = tf.maximum(tf.shape(y_true)[1], tf.shape(y_pred)[1])
-        logit_length = tf.fill([tf.shape(y_pred)[0]], tf.shape(y_pred)[1])        
+        y_true_shape = tf.shape(y_true)
+        batch_size = y_true_shape[0]
+        y_pred_shape = tf.shape(y_pred)
+        max_width = tf.maximum(y_true_shape[1], y_pred_shape[1])
+        logit_length = tf.fill([batch_size], y_pred_shape[1])      
         decoded, _ = tf.nn.ctc_greedy_decoder(
             inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
             sequence_length=logit_length)
@@ -39,4 +38,31 @@ class WordAccuracy(keras.metrics.Metric):
 
     def reset_states(self):
         self.count.assign(0)
+        self.total.assign(0)
+
+
+class EditDistance(keras.metrics.Metric):
+    def __init__(self, name='edit_distance', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.total = self.add_weight(name='total', initializer='zeros')
+        self.sum_distance = self.add_weight(name='sum_distance', 
+                                            initializer='zeros')
+                
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred_shape = tf.shape(y_pred)
+        batch_size = y_pred_shape[0]
+        logit_length = tf.fill([batch_size], y_pred_shape[1])      
+        decoded, _ = tf.nn.ctc_greedy_decoder(
+            inputs=tf.transpose(y_pred, perm=[1, 0, 2]),
+            sequence_length=logit_length)
+        sum_distance = tf.math.reduce_sum(tf.edit_distance(decoded[0], y_true))
+        batch_size = tf.cast(batch_size, tf.float32)
+        self.sum_distance.assign_add(sum_distance)
+        self.total.assign_add(batch_size)
+
+    def result(self):
+        return self.sum_distance / self.total
+
+    def reset_states(self):
+        self.sum_distance.assign(0)
         self.total.assign(0)
