@@ -101,3 +101,5 @@ $ python tools/export.py --model PATH/TO/MODEL --config PATH/TO/CONFIG_FILE --ou
 ```
 
 And now `Tensorflow lite` also can convert this model, that means you can deploy it to Android, iOS etc.
+
+Note. Decoders can't convert to `Tensorflow lite` because of the `StringLookup` layer. Use the softmax layer or None.
