@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Add
 - Use RaggedTensor for train and eval pipeline
 
+## [0.1.1] - 2021-01-22
+### Changed
+- Reduce minimum TensorFlow version to 2.2
+- Better post processing add way
+- Use StaticHashTable instead of StringLookup layer
+
 ## [0.1.0] - 2021-01-09
 ### Added
 - Add <UNK> label
