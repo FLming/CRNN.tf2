@@ -1,6 +1,6 @@
 # Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
 
-![TensorFlow version](https://img.shields.io/badge/TensorFlow->=2.3-FF6F00?logo=tensorflow)
+![TensorFlow version](https://img.shields.io/badge/TensorFlow->=2.2-FF6F00?logo=tensorflow)
 ![Python version](https://img.shields.io/badge/Python->=3.6-3776AB?logo=python)
 [![Paper](https://img.shields.io/badge/paper-arXiv:1507.05717-B3181B?logo=arXiv)](https://arxiv.org/abs/1507.05717)
 [![Zhihu](https://img.shields.io/badge/知乎-文本识别网络CRNN—实现简述-blue?logo=zhihu)](https://zhuanlan.zhihu.com/p/122512498)
@@ -94,12 +94,12 @@ $ python crnn/eval.py --config PATH/TO/CONFIG_FILE --model PATH/TO/MODEL
 
 ## Converte & Ecosystem
 
-There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and convertes model to `SavedModel`/`h5` format by this command, it will add the post processing layer in the last and cull the optimizer:
+There are many components here to help us do other things. For example, deploy by `Tensorflow serving`. Before you deploy, you can pick up a good weight, and convertes model to `SavedModel` format by this command, it will add the post processing layer in the last and cull the optimizer:
 
 ```bash
-$ python tools/export.py --model PATH/TO/MODEL --config PATH/TO/CONFIG_FILE --output PATH/TO/OUTPUT
+$ python tools/export.py --model PATH/TO/MODEL --config PATH/TO/CONFIG_FILE --post greedy --output PATH/TO/OUTPUT
 ```
 
 And now `Tensorflow lite` also can convert this model, that means you can deploy it to Android, iOS etc.
 
-Note. Decoders can't convert to `Tensorflow lite` because of the `StringLookup` layer. Use the softmax layer or None.
+Note. Decoders can't convert to `Tensorflow lite` because of the assets. Use the softmax layer or None.
