@@ -1,13 +1,24 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.layers.experimental import preprocessing
 
 
-class CTCGreedyDecoder(keras.layers.Layer):
-    def __init__(self, vocabulary, merge_repeated=True, **kwargs):
+class CTCDecoder(keras.layers.Layer):
+    def __init__(self, table_path, **kwargs):
         super().__init__(**kwargs)
-        self.table = preprocessing.StringLookup(
-            mask_token=None, vocabulary=vocabulary, invert=True)
+        self.table = tf.lookup.StaticHashTable(tf.lookup.TextFileInitializer(
+            table_path, tf.int64, tf.lookup.TextFileIndex.LINE_NUMBER, 
+            tf.string, tf.lookup.TextFileIndex.WHOLE_LINE), '')
+
+    def detokenize(self, x, keepdims=False):
+        x = tf.RaggedTensor.from_sparse(x)
+        x = tf.ragged.map_flat_values(self.table.lookup, x)
+        strings = tf.strings.reduce_join(x, axis=1)
+        return strings
+
+
+class CTCGreedyDecoder(CTCDecoder):
+    def __init__(self, table_path, merge_repeated=True, **kwargs):
+        super().__init__(table_path, **kwargs)
         self.merge_repeated = merge_repeated
         
     def call(self, inputs):
@@ -17,9 +28,7 @@ class CTCGreedyDecoder(keras.layers.Layer):
             tf.transpose(inputs, perm=[1, 0, 2]), 
             sequence_length,
             self.merge_repeated)
-        x = self.table(decoded[0])
-        x = tf.RaggedTensor.from_sparse(x)
-        strings = tf.strings.reduce_join(x, axis=1)
+        strings = self.detokenize(decoded[0])
         labels = tf.cast(decoded[0], tf.int32)
         loss = tf.nn.ctc_loss(
             labels=labels,
@@ -32,11 +41,9 @@ class CTCGreedyDecoder(keras.layers.Layer):
         return strings, probability
 
 
-class CTCBeamSearchDecoder(keras.layers.Layer):
-    def __init__(self, vocabulary, beam_width=100, top_paths=1, **kwargs):
-        super().__init__(**kwargs)
-        self.table = preprocessing.StringLookup(
-            mask_token=None, vocabulary=vocabulary, invert=True)
+class CTCBeamSearchDecoder(CTCDecoder):
+    def __init__(self, table_path, beam_width=100, top_paths=1, **kwargs):
+        super().__init__(table_path, **kwargs)
         self.beam_width = beam_width
         self.top_paths = top_paths
         
@@ -48,12 +55,8 @@ class CTCBeamSearchDecoder(keras.layers.Layer):
             self.beam_width, 
             self.top_paths)
         strings = []
-        # TODO(hym) map?
         for i in range(self.top_paths):
-            x = self.table(decoded[i])
-            x = tf.RaggedTensor.from_sparse(x)
-            x = tf.strings.reduce_join(x, axis=1, keepdims=True)
-            strings.append(x)
+            strings.append(self.detokenize(decoded[i], True))
         strings = tf.concat(strings, 1)
         probability = tf.math.exp(log_probability)
         return strings, probability
