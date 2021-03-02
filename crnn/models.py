@@ -41,8 +41,6 @@ def vgg_style(x):
 
 
 def build_model(num_classes, img_shape=(32, None, 3)):
-    """ build CNN-RNN model """
-
     img_input = keras.Input(shape=img_shape)
     x = preprocessing.Rescaling(1.0 / 255)(img_input)
     
@@ -52,5 +50,5 @@ def build_model(num_classes, img_shape=(32, None, 3)):
         layers.LSTM(units=256, return_sequences=True), name='bi_lstm1')(x)
     x = layers.Bidirectional(
         layers.LSTM(units=256, return_sequences=True), name='bi_lstm2')(x)
-    logits = layers.Dense(units=num_classes, name='fc1')(x)
+    logits = layers.Dense(units=num_classes, name='logits')(x)
     return keras.Model(inputs=img_input, outputs=logits, name='CRNN')
