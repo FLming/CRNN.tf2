@@ -1,4 +1,4 @@
-# Convolutional Recurrent Neural Network for End-to-End Text Recognize - TensorFlow 2
+# Convolutional Recurrent Neural Network for End-to-End Text Recognition - TensorFlow 2
 
 ![TensorFlow version](https://img.shields.io/badge/TensorFlow->=2.2-FF6F00?logo=tensorflow)
 ![Python version](https://img.shields.io/badge/Python->=3.6-3776AB?logo=python)
@@ -36,7 +36,7 @@ About decode methods, sometimes the beam search method will be better than the g
 
 ## Train
 
-Before you start training, maybe you should [prepare](#Data-prepare) data first. All predictable characters are defined by the [table.txt](example/table.txt) file. The configuration of the training process is defined by the [yaml](configs/mjsynth.yaml) file.
+Before you start training, maybe you should [prepare](#Data-prepare) data first. All predictable characters are defined by the [table.txt](example/table.txt) file. The configuration of the training process is defined by the [yml](configs/mjsynth.yml) file.
 
 ### Installation
 
@@ -47,7 +47,7 @@ $ pip install -r requirements.txt
 This training script uses all GPUs by default, if you want to use a specific GPU, please set the `CUDA_VISIBLE_DEVICES` parameter.
 
 ```bash
-$ python crnn/train.py --config configs/mjsynth.yaml --save_dir PATH/TO/SAVE
+$ python crnn/train.py --config configs/mjsynth.yml --save_dir PATH/TO/SAVE
 ```
 
 The training process can visualize in Tensorboard. 
@@ -56,7 +56,7 @@ The training process can visualize in Tensorboard.
 $ tensorboard --logdir PATH/TO/MODEL_DIR
 ```
 
-For more instructions, please refer to the [config](configs/mjsynth.yaml) file.
+For more instructions, please refer to the [config](configs/mjsynth.yml) file.
 
 ## Data prepare
 
