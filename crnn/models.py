@@ -1,6 +1,5 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.layers.experimental import preprocessing
 
 
 def vgg_style(x):
@@ -40,15 +39,27 @@ def vgg_style(x):
     return x
 
 
-def build_model(num_classes, img_shape=(32, None, 3)):
-    img_input = keras.Input(shape=img_shape)
-    x = preprocessing.Rescaling(1.0 / 255)(img_input)
+def build_model(num_classes,
+                weight=None,
+                preprocess=None,
+                postprocess=None,
+                img_shape=(32, None, 3),
+                model_name='crnn'):
+    x = img_input = keras.Input(shape=img_shape)
+    if preprocess is not None:
+        x = preprocess(x)
     
     x = vgg_style(x)
-
     x = layers.Bidirectional(
         layers.LSTM(units=256, return_sequences=True), name='bi_lstm1')(x)
     x = layers.Bidirectional(
         layers.LSTM(units=256, return_sequences=True), name='bi_lstm2')(x)
-    logits = layers.Dense(units=num_classes, name='logits')(x)
-    return keras.Model(inputs=img_input, outputs=logits, name='CRNN')
+    x = layers.Dense(units=num_classes, name='logits')(x)
+    
+    if postprocess is not None:
+        x = postprocess(x)
+
+    model = keras.Model(inputs=img_input, outputs=x, name=model_name)
+    if weight is not None:
+        model.load_weights(weight, by_name=True, skip_mismatch=True)
+    return model

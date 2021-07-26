@@ -9,7 +9,7 @@ class CTCDecoder(keras.layers.Layer):
             table_path, tf.int64, tf.lookup.TextFileIndex.LINE_NUMBER, 
             tf.string, tf.lookup.TextFileIndex.WHOLE_LINE), '')
 
-    def detokenize(self, x, keepdims=False):
+    def detokenize(self, x):
         x = tf.RaggedTensor.from_sparse(x)
         x = tf.ragged.map_flat_values(self.table.lookup, x)
         strings = tf.strings.reduce_join(x, axis=1)
@@ -56,7 +56,7 @@ class CTCBeamSearchDecoder(CTCDecoder):
             self.top_paths)
         strings = []
         for i in range(self.top_paths):
-            strings.append(self.detokenize(decoded[i], True))
+            strings.append(self.detokenize(decoded[i]))
         strings = tf.concat(strings, 1)
         probability = tf.math.exp(log_probability)
         return strings, probability

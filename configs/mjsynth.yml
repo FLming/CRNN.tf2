@@ -16,19 +16,13 @@ train:
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_val.txt'
     val_ann_paths:
         - '/datasets/MJSynth/mnt/ramdisk/max/90kDICT32px/annotation_test.txt'
-    batch_size_per_replica: 512
-    # The model for restore, even if the number of characters is different
-    restore: ''
-    learning_rate: 0.001
+    batch_size_per_replica: 256
     # Number of epochs to train.
-    epochs: 50
-    # Reduce learning rate when a metric has stopped improving.
-    # ReduceLROnPlateau Arguments
-    # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau#arguments
-    reduce_lr:
-        factor: 0.5
-        patience: 5
-        min_lr: 0.0001
+    epochs: 20
+    lr_schedule:
+        initial_learning_rate: 0.0001
+        decay_steps: 600000
+        alpha: 0.01
     # TensorBoard Arguments
     # https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard#arguments_1
     tensorboard:

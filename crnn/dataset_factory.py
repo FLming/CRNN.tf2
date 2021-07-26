@@ -52,13 +52,13 @@ class ICDARDataset(Dataset):
         return img_relative_path, label
 
 
-class DatasetBuilder():
+class DatasetBuilder:
 
-    def __init__(self, table_path, img_shape=(32, None, 3), max_img_width=300, 
+    def __init__(self, table_path, img_shape=(32, None, 3), max_img_width=300,
                  ignore_case=False):
         # map unknown label to 0
         self.table = tf.lookup.StaticHashTable(tf.lookup.TextFileInitializer(
-            table_path, tf.string, tf.lookup.TextFileIndex.WHOLE_LINE, 
+            table_path, tf.string, tf.lookup.TextFileIndex.WHOLE_LINE,
             tf.int64, tf.lookup.TextFileIndex.LINE_NUMBER), 0)
         self.img_shape = img_shape
         self.ignore_case = ignore_case
@@ -102,7 +102,7 @@ class DatasetBuilder():
             img_width = tf.cast(img_width, tf.int32)
         else:
             img_width = self.img_shape[1]
-        img = tf.image.resize(img, (self.img_shape[0], img_width))
+        img = tf.image.resize(img, (self.img_shape[0], img_width)) / 255.0
         return img, label
 
     def _filter_img(self, img, label):
@@ -116,19 +116,18 @@ class DatasetBuilder():
         tokens = tokens.to_sparse()
         return imgs, tokens
 
-    def build(self, ann_paths, batch_size, is_training):
-        # TODO(hym) Whether need to add AUTOTUNE to map function.
+    def __call__(self, ann_paths, batch_size, is_training):
         ds = self._concatenate_ds(ann_paths)
         if self.ignore_case:
             ds = ds.map(lambda x, y: (x, tf.strings.lower(y)))
         if is_training:
             ds = ds.shuffle(buffer_size=10000)
-        ds = ds.map(self._decode_img)
+        ds = ds.map(self._decode_img, AUTOTUNE)
         if self.preserve_aspect_ratio and batch_size != 1:
             ds = ds.filter(self._filter_img)
             ds = ds.padded_batch(batch_size, drop_remainder=is_training)
         else:
             ds = ds.batch(batch_size, drop_remainder=is_training)
-        ds = ds.map(self._tokenize)
+        ds = ds.map(self._tokenize, AUTOTUNE)
         ds = ds.prefetch(AUTOTUNE)
         return ds
