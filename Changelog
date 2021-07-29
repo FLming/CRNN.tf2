@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Add
 - Use RaggedTensor for train and eval pipeline
 
+## [0.2.0] - 2021-07-29
+### Changed
+- New export script
+- New model build way
+
 ## [0.1.1] - 2021-01-22
 ### Changed
 - Reduce minimum TensorFlow version to 2.2

@@ -1,2 +1,2 @@
 pyyaml
-tensorflow >= 2.2
+tensorflow >= 2.3

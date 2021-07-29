@@ -5,8 +5,6 @@ import yaml
 import tensorflow as tf
 from tensorflow import keras
 
-import decoders
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--images', type=str, required=True, 
                     help='Image file or folder path.')
@@ -35,19 +33,12 @@ def read_img_and_resize(path, shape):
 
 
 model = keras.models.load_model(args.model, compile=False)
-decoder = decoders.CTCGreedyDecoder(config['table_path'])
 
 p = Path(args.images)
-if p.is_dir():
-    img_paths = p.iterdir()
-else:
-    img_paths = [p]
-
+img_paths = p.iterdir() if p.is_dir() else [p]
 for img_path in img_paths:
     img = read_img_and_resize(str(img_path), config['img_shape'])
     img = tf.expand_dims(img, 0)
     outputs = model(img)
-    if not isinstance(outputs, tuple):
-        outputs = decoder(outputs)
     print(f'Path: {img_path}, y_pred: {outputs[0].numpy()}, '
           f'probability: {outputs[1].numpy()}')
