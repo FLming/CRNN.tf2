@@ -49,7 +49,7 @@ This training script uses all GPUs by default, if you want to use a specific GPU
 $ python crnn/train.py --config configs/mjsynth.yml --save_dir PATH/TO/SAVE
 ```
 
-The training process can visualize in Tensorboard. 
+The training process can visualize in Tensorboard.
 
 ```bash
 $ tensorboard --logdir PATH/TO/MODEL_DIR

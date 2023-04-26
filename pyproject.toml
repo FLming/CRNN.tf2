@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 80
+target-version = ['py37']
+include = '\.pyi?$'
+# 'extend-exclude' excludes files or directories in addition to the defaults
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+'''
+
+[tool.isort]
+profile = "black"
+src_paths = ["crnn"]
+line_length = 80
+force_single_line = true
